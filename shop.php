@@ -332,8 +332,19 @@ $totalPages = ceil($totalProducts / $limit);
                                             </div>
                                             <div class="product__item__text">
                                                 <h6><?php echo $row['product_name']; ?></h6>
-                                                <a href="add_to_cart.php?product_id=<?php echo $row['product_id']; ?>"
-                                                    class="add-cart">+ Thêm vào giỏ</a>
+                                                <a href="javascript:void(0)" class="add-cart"
+                                    data-product-id="<?php echo $row['product_id']; ?>"
+                                    data-product-name="<?php echo htmlspecialchars($row['product_name']); ?>"
+                                    data-product-price="<?php echo $row['price']; ?>" onclick="addToCart(
+                                        '<?php echo $row['product_id']; ?>',
+                                        '<?php echo addslashes($row['product_name']); ?>',
+                                        <?php echo $row['price']; ?>, 
+                                        1,  
+                                        null,
+                                        (document.querySelector('input[name=color_<?php echo $row['product_id']; ?>]:checked')?.value ?? 'Black')
+                                        )">
+                                    Thêm vào giỏ hàng
+                                </a>
                                                 <div class="rating">
                                                     <i class="fa fa-star-o"></i>
                                                     <i class="fa fa-star-o"></i>
