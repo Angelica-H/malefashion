@@ -63,13 +63,15 @@ session_start();
         <!-- Thông báo-->
         <?php include "includes/notification.php" ?>
         <div class="container">
-            <div class="row">
-                <div class="col-lg-8">
+            <div class="row mb-5">
+                <div class="col-lg-12">
                     <div class="shopping__cart__table">
                         <table>
                             <thead>
                                 <tr>
                                     <th>Sản Phẩm</th>
+                                    <th>kích cỡ</th>
+                                    <th>Màu sắc</th>
                                     <th>Số Lượng</th>
                                     <th>Tổng</th>
                                     <th>Hành Động</th>
@@ -116,8 +118,9 @@ session_start();
                                     </td>
                                     <td class="cart__price">$ 30.00</td>
                                     <td class="cart__close"><i class="fa fa-close"></i></td>
-                                </tr>
--->
+                                </tr> 
+                                -->
+
                             </tbody>
                         </table>
                     </div>
@@ -134,12 +137,14 @@ session_start();
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-4">
+            </div>
+            <div class="row ">
+            <div class="col-lg-12">
                     <div class="cart__discount">
-                        <h6>Discount codes</h6>
+                        <h6>Mã giảm giá</h6>
                         <form action="#">
-                            <input type="text" placeholder="Coupon code">
-                            <button type="submit">Apply</button>
+                            <input type="text" placeholder="Nhập mã giảm giá">
+                            <button type="submit">Áp dụng</button>
                         </form>
                     </div>
                     <form id="checkout-form" action="process_checkout.php" method="POST" onsubmit="submitCheckout()">

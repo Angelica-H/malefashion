@@ -2425,14 +2425,14 @@ ol {
 }
 
 .cart__discount {
-	margin-bottom: 60px;
+	margin-bottom: 20px;
 }
 
 .cart__discount h6 {
 	color: #111111;
 	font-weight: 700;
 	text-transform: uppercase;
-	margin-bottom: 35px;
+	margin-bottom: 1px;
 }
 
 .cart__discount form {
@@ -3987,4 +3987,47 @@ ol {
 	opacity: 1;
 	transform: scale(1.3);
 	box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+
+/* Căn chỉnh và bố cục cơ bản */
+.size__item, .color__item {
+    text-align: left; /* Căn trái */
+    vertical-align: middle;
+    padding: 5px;
+}
+
+/* Style cho thẻ <select> không có viền và căn trái */
+.size__item select, .color__item select {
+    width: 80px; /* Chiều rộng của dropdown */
+    height: 40px; /* Chiều cao của dropdown */
+    background-color: #f9f9f9; /* Màu nền */
+    border: none; /* Bỏ viền */
+    border-radius: 5px; /* Bo góc */
+    font-size: 16px; /* Kích thước font */
+    padding: 5px; /* Khoảng cách nội dung bên trong */
+    color: #333; /* Màu chữ */
+    cursor: pointer; /* Con trỏ chuột */
+    text-align: left; /* Căn trái cho nội dung bên trong */
+    padding-left: 10px; /* Thêm khoảng cách giữa nội dung và mép trái */
+    transition: all 0.3s ease; /* Hiệu ứng chuyển động mượt */
+}
+
+/* Hiệu ứng khi hover (khi di chuột vào) */
+.size__item select:hover, .color__item select:hover {
+    background-color: #fff; /* Màu nền khi hover */
+}
+
+/* Style cho các tùy chọn (option) */
+.size__item select option, .color__item select option {
+    padding: 10px; /* Khoảng cách bên trong các tùy chọn */
+    background-color: #fff; /* Màu nền cho từng tùy chọn */
+    color: #333; /* Màu chữ */
+    text-align: left; /* Căn trái cho các tùy chọn */
+}
+
+/* Style khi chọn một tùy chọn */
+.size__item select:focus, .color__item select:focus {
+    outline: none; /* Bỏ viền mặc định khi chọn */
+    box-shadow: none; /* Bỏ hiệu ứng đổ bóng khi chọn */
 }

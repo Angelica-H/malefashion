@@ -47,9 +47,27 @@ function displayCart() {
                         <img src="img/product/${product.id}.jpg" alt="">
                     </div>
                     <div class="product__cart__item__text">
-                        <h6>${product.name} (Size: ${product.size}, Color: ${product.color})</h6>
+                        <h6>${product.name}</h6>
                         <h5>$${product.price.toFixed(2)}</h5>
                     </div>
+                </td>
+                <td class="size__item">
+                    <select onchange="updateSize(${index}, this.value)">
+                        <option value="S" ${product.size === 'S' ? 'selected' : ''}>S</option>
+                        <option value="M" ${product.size === 'M' ? 'selected' : ''}>M</option>
+                        <option value="L" ${product.size === 'L' ? 'selected' : ''}>L</option>
+                        <option value="L" ${product.size === 'XL' ? 'selected' : ''}>XL</option>
+                        <option value="L" ${product.size === 'XXL' ? 'selected' : ''}>XXL</option>
+                        <!-- Thêm các tùy chọn size khác từ cơ sở dữ liệu nếu có -->
+                    </select>
+                </td>
+                <td class="color__item">
+                    <select onchange="updateColor(${index}, this.value)">
+                        <option value="Red" ${product.color === 'Red' ? 'selected' : ''}>Red</option>
+                        <option value="Blue" ${product.color === 'Blue' ? 'selected' : ''}>Blue</option>
+                        <option value="Green" ${product.color === 'Green' ? 'selected' : ''}>Green</option>
+                        <!-- Thêm các tùy chọn màu khác từ cơ sở dữ liệu nếu có -->
+                    </select>
                 </td>
                 <td class="quantity__item">
                     <div class="quantity">
