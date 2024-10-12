@@ -1,6 +1,12 @@
 <?php
 include 'includes/db_connect.php'; // Kết nối cơ sở dữ liệu
 session_start();
+
+// Kiểm tra kết nối
+if ($conn->connect_error) {
+    die("Kết nối thất bại: " . $conn->connect_error);
+}
+
 $sql = "SELECT orders.order_id, 
                CONCAT(customers.first_name, ' ', customers.last_name) AS receiver_name,
                customers.shipping_address,
@@ -10,62 +16,32 @@ $sql = "SELECT orders.order_id,
         FROM orders
         JOIN customers ON orders.customer_id = customers.customer_id";
 $result = $conn->query($sql);
-//echo '<pre>';
-//print_r($_SESSION['cart']);
-//echo '</pre>';
 ?>
+
 <!DOCTYPE html>
-<html lang="zxx">
+<html lang="vi">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="description" content="Male_Fashion Template">
-    <meta name="keywords" content="Male_Fashion, unica, creative, html">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Male-Fashion | Template</title>
-
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap"
-        rel="stylesheet">
-
+    <title>Danh Sách Đơn Hàng</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <!-- Css Styles -->
-    <?php include "includes/css.php" ?>
-
+    <?php include "includes/css.php"; ?>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
 
 <body>
-    <!-- Page Preloder -->
-    <div id="preloder">
-        <div class="loader"></div>
-    </div>
-
     <!-- Offcanvas Menu Begin -->
-    <?php include "includes/menu_begin.php" ?>
+    <?php include "includes/menu_begin.php"; ?>
     <!-- Offcanvas Menu End -->
 
     <!-- Header Section Begin -->
-    <?php include "includes/header_section.php" ?>
+    <?php include "includes/header_section.php"; ?>
     <!-- Header Section End -->
 
-    <!-- Breadcrumb Section Begin -->
-    <section class="breadcrumb-option">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="breadcrumb__text">
-                        <h4>Shopping Cart</h4>
-                        <div class="breadcrumb__links">
-                            <a href="./index.html">Home</a>
-                            <a href="./shop.html">Shop</a>
-                            <span>Shopping Cart</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    <!-- Breadcrumb Section End -->
     <div class="container mt-5">
         <h2 class="text-center">Danh Sách Đơn Hàng</h2>
 
@@ -82,15 +58,17 @@ $result = $conn->query($sql);
             <tbody>
                 <?php
                 if ($result->num_rows > 0) {
-                    // Lặp qua tất cả các đơn hàng và hiển thị
                     while ($row = $result->fetch_assoc()) {
                         echo "<tr>";
                         echo "<td>" . $row['order_id'] . "</td>";
                         echo "<td>" . $row['receiver_name'] . "<br>" . $row['shipping_address'] . "<br>SĐT: " . $row['phone_number'] . "</td>";
                         echo "<td>₫" . number_format($row['total'], 0, ',', '.') . "</td>";
                         echo "<td>" . $row['status'] . "</td>";
-                        echo "<td><button class='btn btn-info' data-toggle='modal' data-target='#orderDetailsModal" . $row['order_id'] . "'>Xem Chi Tiết</button></td>";
+                        echo "<td>
+                            <button class='btn btn-info' data-toggle='modal' data-target='#orderDetailsModal" . $row['order_id'] . "' data-id='" . $row['order_id'] . "'>Xem Chi Tiết</button>
+                        </td>";
                         echo "</tr>";
+
                         // Modal cho chi tiết đơn hàng
                         echo "<div class='modal fade' id='orderDetailsModal" . $row['order_id'] . "' tabindex='-1' role='dialog' aria-labelledby='orderDetailsModalLabel" . $row['order_id'] . "' aria-hidden='true'>
                             <div class='modal-dialog' role='document'>
@@ -102,20 +80,9 @@ $result = $conn->query($sql);
                                         </button>
                                     </div>
                                     <div class='modal-body'>
-                                        <ul>";
-                        // Truy vấn để lấy chi tiết đơn hàng
-                        $order_id = $row['order_id'];
-                        $sql_details = "SELECT product_variants.product_name, order_items.quantity, order_items.price 
-                                        FROM order_items 
-                                        JOIN product_variants ON order_items.variant_id = product_variants.variant_id 
-                                        WHERE order_items.order_id = '$order_id'";
-                        $result_details = $conn->query($sql_details);
-                        if ($result_details->num_rows > 0) {
-                            while ($detail_row = $result_details->fetch_assoc()) {
-                                echo "<li>" . $detail_row['product_name'] . " - " . $detail_row['quantity'] . " x ₫" . number_format($detail_row['price'], 0, ',', '.') . "</li>";
-                            }
-                        }
-                        echo "        </ul>
+                                        <ul id='order-details-list-" . $row['order_id'] . "'>
+                                            <!-- Chi tiết sẽ được chèn vào đây -->
+                                        </ul>
                                     </div>
                                     <div class='modal-footer'>
                                         <button type='button' class='btn btn-secondary' data-dismiss='modal'>Đóng</button>
@@ -132,32 +99,35 @@ $result = $conn->query($sql);
         </table>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<!-- Footer Section Begin -->
-<?php include "includes/footer_section.php" ?>
-<!-- Footer Section End -->
+    <script>
+        $(document).ready(function() {
+            $('.btn-info').click(function() {
+                var orderId = $(this).data('id'); // Lấy ID đơn hàng từ thuộc tính data-id
 
-<!-- Search Begin -->
-<div class="search-model">
-    <div class="h-100 d-flex align-items-center justify-content-center">
-        <div class="search-close-switch">+</div>
-        <form class="search-model-form">
-            <input type="text" id="search-input" placeholder="Search here.....">
-        </form>
-    </div>
-</div>
+                // Gọi AJAX để lấy chi tiết đơn hàng
+                $.ajax({
+                    url: 'includes/get_order_details.php', // Tệp xử lý để lấy chi tiết đơn hàng
+                    type: 'POST',
+                    data: { order_id: orderId },
+                    success: function(response) {
+                        // Chèn dữ liệu vào modal
+                        $('#order-details-list-' + orderId).html(response);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Lỗi: " + error);
+                    }
+                });
+            });
+        });
+    </script>
 
-    <!-- Search End -->
-
-    <!-- Js Plugins -->
-    <?php include "includes/js.php" ?>
+    <!-- Footer Section Begin -->
+    <?php include "includes/footer_section.php"; ?>
+    <!-- Footer Section End -->
 
 </body>
-
 </html>
+
 <?php
-// Đóng kết nối
 $conn->close();
 ?>
