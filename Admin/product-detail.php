@@ -1457,27 +1457,32 @@
                                 </a>
                                 <ul>
                                     <li>
-                                        <a href="./user.html">
+                                        <a href="./user.php
+">
                                             <i class="metismenu-icon"></i>User
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./order.html">
+                                        <a href="./order.php
+">
                                             <i class="metismenu-icon"></i>Order
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./product.html" class="mm-active">
+                                        <a href="./product.php
+" class="mm-active">
                                             <i class="metismenu-icon"></i>Product
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./category.html">
+                                        <a href="./category.php
+">
                                             <i class="metismenu-icon"></i>Category
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./brand.html">
+                                        <a href="./brand.php
+">
                                             <i class="metismenu-icon"></i>Brand
                                         </a>
                                     </li>
@@ -1507,7 +1512,8 @@
                             </div>
 
                             <div class="page-title-actions">
-                                <a href="./product-detail-create.html" class="btn-shadow btn-hover-shine mr-3 btn btn-primary">
+                                <a href="./product-detail-create.php
+" class="btn-shadow btn-hover-shine mr-3 btn btn-primary">
                                     <span class="btn-icon-wrapper pr-2 opacity-7">
                                         <i class="fa fa-plus fa-w-20"></i>
                                     </span>
@@ -1565,7 +1571,8 @@
                                                 <td class="">5</td>
                                                 
                                                 <td class="text-center">
-                                                    <a href="./product-detail-edit.html" data-toggle="tooltip" title="Edit"
+                                                    <a href="./product-detail-edit.php
+" data-toggle="tooltip" title="Edit"
                                                         data-placement="bottom" class="btn btn-outline-warning border-0 btn-sm">
                                                         <span class="btn-icon-wrapper opacity-8">
                                                             <i class="fa fa-edit fa-w-20"></i>

@@ -1457,27 +1457,32 @@
                                 </a>
                                 <ul>
                                     <li>
-                                        <a href="./user.html">
+                                        <a href="./user.php
+">
                                             <i class="metismenu-icon"></i>User
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./order.html" class="mm-active">
+                                        <a href="./order.php
+" class="mm-active">
                                             <i class="metismenu-icon"></i>Order
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./product.html">
+                                        <a href="./product.php
+">
                                             <i class="metismenu-icon"></i>Product
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./category.html">
+                                        <a href="./category.php
+">
                                             <i class="metismenu-icon"></i>Category
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./brand.html">
+                                        <a href="./brand.php
+">
                                             <i class="metismenu-icon"></i>Brand
                                         </a>
                                     </li>
@@ -1583,7 +1588,8 @@
                                                     </div>
                                                 </td>
                                                 <td class="text-center">
-                                                    <a href="./order-show.html"
+                                                    <a href="./order-show.php
+"
                                                         class="btn btn-hover-shine btn-outline-primary border-0 btn-sm">
                                                         Details
                                                     </a>

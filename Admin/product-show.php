@@ -1457,27 +1457,32 @@
                                 </a>
                                 <ul>
                                     <li>
-                                        <a href="./user.html">
+                                        <a href="./user.php
+">
                                             <i class="metismenu-icon"></i>User
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./order.html">
+                                        <a href="./order.php
+">
                                             <i class="metismenu-icon"></i>Order
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./product.html" class="mm-active">
+                                        <a href="./product.php
+" class="mm-active">
                                             <i class="metismenu-icon"></i>Product
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./category.html">
+                                        <a href="./category.php
+">
                                             <i class="metismenu-icon"></i>Category
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./brand.html">
+                                        <a href="./brand.php
+">
                                             <i class="metismenu-icon"></i>Brand
                                         </a>
                                     </li>
@@ -1530,7 +1535,8 @@
                                         <label for="brand_id"
                                             class="col-md-3 text-md-right col-form-label">Product Images</label>
                                         <div class="col-md-9 col-xl-8">
-                                            <p><a href="./product-image.html">Manage images</a></p>
+                                            <p><a href="./product-image.php
+">Manage images</a></p>
                                         </div>
                                     </div>
 
@@ -1538,7 +1544,8 @@
                                         <label for="brand_id"
                                             class="col-md-3 text-md-right col-form-label">Product Details</label>
                                         <div class="col-md-9 col-xl-8">
-                                            <p><a href="./product-detail.html">Manage details</a></p>
+                                            <p><a href="./product-detail.php
+">Manage details</a></p>
                                         </div>
                                     </div>
 

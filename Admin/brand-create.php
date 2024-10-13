@@ -1457,27 +1457,32 @@
                                 </a>
                                 <ul>
                                     <li>
-                                        <a href="./user.html">
+                                        <a href="./user.php
+">
                                             <i class="metismenu-icon"></i>User
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./order.html">
+                                        <a href="./order.php
+">
                                             <i class="metismenu-icon"></i>Order
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./product.html">
+                                        <a href="./product.php
+">
                                             <i class="metismenu-icon"></i>Product
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./category.html">
+                                        <a href="./category.php
+">
                                             <i class="metismenu-icon"></i>Category
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./brand.html" class="mm-active">
+                                        <a href="./brand.php
+" class="mm-active">
                                             <i class="metismenu-icon"></i>Brand
                                         </a>
                                     </li>

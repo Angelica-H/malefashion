@@ -1457,27 +1457,32 @@
                                 </a>
                                 <ul>
                                     <li>
-                                        <a href="./user.html" class="mm-active">
+                                        <a href="./user.php
+" class="mm-active">
                                             <i class="metismenu-icon"></i>User
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./order.html">
+                                        <a href="./order.php
+">
                                             <i class="metismenu-icon"></i>Order
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./product.html">
+                                        <a href="./product.php
+">
                                             <i class="metismenu-icon"></i>Product
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./category.html">
+                                        <a href="./category.php
+">
                                             <i class="metismenu-icon"></i>Category
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="./brand.html">
+                                        <a href="./brand.php
+">
                                             <i class="metismenu-icon"></i>Brand
                                         </a>
                                     </li>
@@ -1511,7 +1516,8 @@
 
                     <ul class="body-tabs body-tabs-layout tabs-animated body-tabs-animated nav">
                         <li class="nav-item">
-                            <a href="./user-edit.html" class="nav-link">
+                            <a href="./user-edit.php
+" class="nav-link">
                                 <span class="btn-icon-wrapper pr-2 opacity-8">
                                     <i class="fa fa-edit fa-w-20"></i>
                                 </span>
