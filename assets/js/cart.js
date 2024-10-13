@@ -25,6 +25,7 @@ function displayCart() {
     const cartContent = document.getElementById('cart-content');
     const totalAmountDisplay = document.getElementById('total-amount');
     let totalAmount = 0;
+    let totalQuantity = 0;
 
     cartContent.innerHTML = '';
 
@@ -37,6 +38,7 @@ function displayCart() {
     cart.forEach((product, index) => {
         const totalPrice = product.price * product.quantity;
         totalAmount += totalPrice;
+        totalQuantity += product.quantity;
 
         cartContent.innerHTML += `
             <tr>
@@ -56,6 +58,7 @@ function displayCart() {
                         <option value="L" ${product.size === 'L' ? 'selected' : ''}>L</option>
                         <option value="XL" ${product.size === 'XL' ? 'selected' : ''}>XL</option>
                         <option value="XXL" ${product.size === 'XXL' ? 'selected' : ''}>XXL</option>
+                        <!-- Thêm các tùy chọn size khác từ cơ sở dữ liệu nếu có -->
                     </select>
                 </td>
                 <td class="color__item">
@@ -63,6 +66,7 @@ function displayCart() {
                         <option value="Red" ${product.color === 'Red' ? 'selected' : ''}>Red</option>
                         <option value="Blue" ${product.color === 'Blue' ? 'selected' : ''}>Blue</option>
                         <option value="Green" ${product.color === 'Green' ? 'selected' : ''}>Green</option>
+                        <!-- Thêm các tùy chọn màu khác từ cơ sở dữ liệu nếu có -->
                     </select>
                 </td>
                 <td class="quantity__item">
@@ -81,28 +85,7 @@ function displayCart() {
     });
 
     totalAmountDisplay.innerHTML = `$${totalAmount.toFixed(2)}`;
-}
-
-// Hàm để cập nhật kích thước sản phẩm
-function updateSize(index, newSize) {
-    const cart = JSON.parse(localStorage.getItem('cart')) || [];
-    
-    if (cart.length > index) {
-        cart[index].size = newSize; // Cập nhật kích thước mới
-        localStorage.setItem('cart', JSON.stringify(cart)); // Lưu lại vào localStorage
-        displayCart(); // Cập nhật lại giỏ hàng sau khi thay đổi
-    }
-}
-
-// Hàm để cập nhật màu sắc sản phẩm
-function updateColor(index, newColor) {
-    const cart = JSON.parse(localStorage.getItem('cart')) || [];
-    
-    if (cart.length > index) {
-        cart[index].color = newColor; // Cập nhật màu sắc mới
-        localStorage.setItem('cart', JSON.stringify(cart)); // Lưu lại vào localStorage
-        displayCart(); // Cập nhật lại giỏ hàng sau khi thay đổi
-    }
+    updateCartDisplay();
 }
 
 // Hàm để cập nhật số lượng sản phẩm trong giỏ hàng
@@ -119,6 +102,7 @@ function updateCart(index, newQuantity) {
         localStorage.setItem('cart', JSON.stringify(cart)); // Lưu lại vào localStorage
         displayCart(); // Cập nhật lại giỏ hàng sau khi thay đổi
     }
+    calculateCartTotal(); 
 }
 
 // Hàm để xóa sản phẩm khỏi giỏ hàng
@@ -131,6 +115,7 @@ function removeFromCart(index) {
         alert("Sản phẩm đã được xóa khỏi giỏ hàng");
         displayCart(); // Cập nhật lại giỏ hàng
     }
+    calculateCartTotal(); 
 }
 
 // Hàm để đặt hàng
@@ -157,6 +142,7 @@ function updateCartDisplay() {
 
     document.getElementById('cart-count').textContent = totalQuantity; // Cập nhật thẻ hiển thị số lượng
     document.getElementById('cart-total').textContent = `$${totalPrice}`; // Cập nhật thẻ hiển thị tổng tiền
+    calculateCartTotal(); 
 }
 
 // Hàm để tính tổng số lượng sản phẩm trong giỏ hàng
@@ -168,4 +154,11 @@ function calculateTotalCartQuantity() {
 // Hàm để tính tổng tiền trong giỏ hàng
 function calculateTotalCartPrice() {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
-    return cart.reduce((total, product) => total + (product.price * product.quantity), 0).toFixed(2
+    return cart.reduce((total, product) => total + (product.price * product.quantity), 0).toFixed(2);
+}
+
+// Gọi hàm hiển thị giỏ hàng và cập nhật khi tải trang
+document.addEventListener('DOMContentLoaded', function () {
+    displayCart(); // Hiển thị giỏ hàng khi tải trang
+    updateCartDisplay(); // Cập nhật hiển thị giỏ hàng
+});

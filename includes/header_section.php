@@ -54,7 +54,7 @@
             <div class="header__nav__option">
                 <a href="#" class="search-switch"><img src="img/icon/search.png" alt=""></a>
                 <a href="#"><img src="img/icon/heart.png" alt=""></a>
-                <a href="./shopping-cart.php"><img src="img/icon/cart.png" alt="">
+                <a href="./shopping-cart.php"><img src="./assets/img/icon/cart.png" alt="">
                     <span id="cart-count">0</span>
                 </a>
                 

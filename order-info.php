@@ -12,6 +12,7 @@ $sql = "SELECT orders.order_id,
                customers.shipping_address,
                customers.phone_number,
                orders.total,
+               orders.order_date,
                orders.status
         FROM orders
         JOIN customers ON orders.customer_id = customers.customer_id";
@@ -49,6 +50,7 @@ $result = $conn->query($sql);
             <thead>
                 <tr>
                     <th>Mã Đơn Hàng</th>
+                    <th>Ngày đặt</th>
                     <th>Thông Tin Người Nhận</th>
                     <th>Tổng Tiền</th>
                     <th>Trạng Thái Đơn Hàng</th>
@@ -61,6 +63,7 @@ $result = $conn->query($sql);
                     while ($row = $result->fetch_assoc()) {
                         echo "<tr>";
                         echo "<td>" . $row['order_id'] . "</td>";
+                        echo "<td>" . $row['order_date'] . "</td>";
                         echo "<td>" . $row['receiver_name'] . "<br>" . $row['shipping_address'] . "<br>SĐT: " . $row['phone_number'] . "</td>";
                         echo "<td>₫" . number_format($row['total'], 0, ',', '.') . "</td>";
                         echo "<td>" . $row['status'] . "</td>";
