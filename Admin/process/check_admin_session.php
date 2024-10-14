@@ -16,7 +16,7 @@ function checkAdminSession() {
 }
 
 function redirectToLogin() {
-    header("Location: ../login.php");
+    header("Location: login.php");
     exit();
 }
 ?>

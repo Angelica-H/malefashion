@@ -1,4 +1,6 @@
-<?php include '../includes/db_connect.php'
+<?php
+session_start();
+include '../includes/db_connect.php';
 
 ?>
 <!doctype html>
@@ -30,25 +32,30 @@
             <div class="modal-dialog w-100 mx-auto">
                 <div class="modal-content">
                     <div class="modal-body">
+                        <?php
+                        if (isset($_GET['success']) && $_GET['success'] == 'password_reset') {
+                            echo '<div class="alert alert-success" role="alert">Mật khẩu đã được thay đổi thành công!</div>';
+                        }
+                        ?>
                         <div class="h5 modal-title text-center">
                             <h4 class="mt-2">
                                 <div>Welcome back,</div>
                                 <span>Please sign in to your account below.</span>
                             </h4>
                         </div>
-                        <form action="process/process_login.php" method="POST"> <!-- Thêm action và method -->
+                        <form action="process/process_login.php" method="POST">
                             <div class="form-row">
                                 <div class="col-md-12">
                                     <div class="position-relative form-group">
                                         <input name="email" id="exampleEmail" placeholder="Email here..."
-                                            type="email" class="form-control" required> <!-- Thêm required -->
+                                            type="email" class="form-control" required>
                                     </div>
                                 </div>
                                 <div class="col-md-12">
                                     <div class="position-relative form-group">
                                         <input name="password" id="examplePassword"
                                             placeholder="Password here..." type="password"
-                                            class="form-control" required> <!-- Thêm required -->
+                                            class="form-control" required>
                                     </div>
                                 </div>
                             </div>
@@ -60,10 +67,10 @@
                     </div>
                     <div class="modal-footer clearfix">
                         <div class="float-right">
-                            <button type="submit" class="btn btn-primary btn-lg">Login to Dashboard</button> <!-- Thêm type="submit" -->
+                            <button type="submit" class="btn btn-primary btn-lg">Login to Dashboard</button>
                         </div>
                     </div>
-                    </form> <!-- Đóng thẻ form -->
+                    </form>
                 </div>
             </div>
             <div class="text-center text-white opacity-8 mt-3">Copyright © CodeLean 2022</div>

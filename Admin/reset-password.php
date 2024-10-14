@@ -1,52 +1,51 @@
 <?php
-require 'process/config.php';
-require 'process/db_connect.php';
+require_once 'process/config.php';
+require_once 'includes/db_connect.php';
 
-if (!isset($_GET['token'])) {
-    header("Location: " . BASE_URL . "login.php");
-    exit();
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $token = $_POST['token'];
+    $new_password = $_POST['new_password'];
+    $confirm_password = $_POST['confirm_password'];
+    
+    // Xử lý đặt lại mật khẩu
+    // ...
 }
-
-$token = $_GET['token'];
-
-// Kiểm tra token có hợp lệ không
-$stmt = $conn->prepare("SELECT email FROM password_resets WHERE token = ? AND expires > NOW()");
-$stmt->bind_param("s", $token);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows == 0) {
-    echo "Invalid or expired token.";
-    exit();
-}
-
-$email = $result->fetch_assoc()['email'];
 ?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password</title>
-    <!-- Thêm các file CSS cần thiết -->
+    <title>Đặt Lại Mật Khẩu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h2>Reset Password</h2>
-        <form action="process/process_reset_password.php" method="POST">
-            <input type="hidden" name="token" value="<?php echo $token; ?>">
-            <div class="form-group">
-                <label for="new_password">New Password:</label>
-                <input type="password" id="new_password" name="new_password" required>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h2 class="card-title text-center mb-4">Đặt Lại Mật Khẩu</h2>
+                        <form action="process/process_reset_password.php" method="POST">
+                            <div class="mb-3">
+                                <input type="text" class="form-control" name="token" required placeholder="Nhập mã đặt lại mật khẩu của bạn">
+                            </div>
+                            <div class="mb-3">
+                                <input type="password" class="form-control" name="new_password" required placeholder="Nhập mật khẩu mới">
+                            </div>
+                            <div class="mb-3">
+                                <input type="password" class="form-control" name="confirm_password" required placeholder="Xác nhận mật khẩu mới">
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Đặt Lại Mật Khẩu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="confirm_password">Confirm New Password:</label>
-                <input type="password" id="confirm_password" name="confirm_password" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Reset Password</button>
-        </form>
+        </div>
     </div>
-    <!-- Thêm các file JavaScript cần thiết -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
