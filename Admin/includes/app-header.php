@@ -403,7 +403,7 @@
                                                                                 <div
                                                                                     class="avatar-icon-wrapper avatar-icon-sm">
                                                                                     <div class="avatar-icon">
-                                                                                        <img src="assets/images/avatars/1.jpg"
+                                                                                        <img src="assets/images/avatars/admin.jpg"
                                                                                             alt="">
                                                                                     </div>
                                                                                 </div>
@@ -832,7 +832,7 @@
                                     <div class="btn-group">
                                         <a data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
                                             class="p-0 btn">
-                                            <img width="42" class="rounded-circle" src="assets/images/avatars/1.jpg"
+                                            <img width="42" class="rounded-circle" src="assets/images/avatars/admin.jpg"
                                                 alt="">
                                             <i class="fa fa-angle-down ml-2 opacity-8"></i>
                                         </a>
@@ -848,14 +848,13 @@
                                                             <div class="widget-content-wrapper">
                                                                 <div class="widget-content-left mr-3">
                                                                     <img width="42" class="rounded-circle"
-                                                                        src="assets/images/avatars/1.jpg" alt="">
+                                                                        src="assets/images/avatars/admin.jpg" alt="">
                                                                 </div>
                                                                 <div class="widget-content-left">
-                                                                    <div class="widget-heading">Alina Mcloughlin</div>
-                                                                    <div class="widget-subheading opacity-8">A short
-                                                                        profile description</div>
+                                                                    <div class="widget-heading"><?php echo isset($_SESSION['username']) ? htmlspecialchars($_SESSION['username']) : 'Guest'; ?></div>
+                                                                    <div class="widget-subheading opacity-8"><?php echo isset($_SESSION['role']) ? htmlspecialchars($_SESSION['role']) : 'No Role'; ?></div>
                                                                 </div>
-                                                                                                <div class="widget-content-right mr-2">
+                                                                <div class="widget-content-right mr-2">
                                     <form action="process/process_logout.php" method="POST" style="display:inline;">
                                         <button class="btn-pill btn-shadow btn-shine btn btn-focus" type="submit">Logout</button>
                                     </form>
@@ -875,9 +874,8 @@
                                                             </a>
                                                         </li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Recover
-                                                                Password</a>
-                                                        </li>
+    <a href="recover-password.php" class="nav-link">Recover Password</a>
+</li>
                                                         <li class="nav-item-header nav-item">My Account
                                                         </li>
                                                         <li class="nav-item">
@@ -931,8 +929,8 @@
                                     </div>
                                 </div>
                                 <div class="widget-content-left  ml-3 header-user-info">
-                                    <div class="widget-heading"> Alina Mclourd </div>
-                                    <div class="widget-subheading"> VP People Manager </div>
+                                    <div class="widget-heading"> <?php echo $_SESSION['username']; ?> </div>
+                                    <div class="widget-subheading"> <?php echo $_SESSION['role']; ?> </div>
                                 </div>
                                 <div class="widget-content-right header-user-info ml-3">
                                     <button type="button"

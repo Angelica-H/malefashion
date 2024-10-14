@@ -22,6 +22,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Đăng nhập thành công
             $_SESSION['user_id'] = $user['admin_id']; // Thay đổi thành admin_id
             $_SESSION['role'] = $user['role']; // Thêm role nếu cần thiết
+            $_SESSION['username'] = $user['username']; // Thêm username người dùng
+            $_SESSION['email'] = $user['email']; // Thêm email người dùng
             header("Location: ../index.php"); // Chuyển hướng đến trang dashboard
             exit();
         } else {
