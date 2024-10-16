@@ -2,6 +2,7 @@
  require 'process/config.php';
  require 'process/check_admin_session.php';
  checkAdminSession();
+
 ?>
  
 <!doctype html>
@@ -522,12 +523,12 @@
                             </div>
 
                             <div class="page-title-actions">
-                                <a href="./user-create.php
-" class="btn-shadow btn-hover-shine mr-3 btn btn-primary">
+                                
+                                <a href="./admin-create.php" class="btn-shadow btn-hover-shine mr-3 btn btn-success">
                                     <span class="btn-icon-wrapper pr-2 opacity-7">
-                                        <i class="fa fa-plus fa-w-20"></i>
+                                        <i class="fa fa-user-plus fa-w-20"></i>
                                     </span>
-                                    Create
+                                    Create Admin
                                 </a>
                             </div>
                         </div>
@@ -559,7 +560,17 @@
                                         </div>
                                     </div>
                                 </div>
-
+                                <?php
+        if (isset($_SESSION['success_message'])) {
+            echo '<div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    ' . htmlspecialchars($_SESSION['success_message']) . '
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>';
+            unset($_SESSION['success_message']);
+        }
+        ?>
                                 <div class="table-responsive">
                                     <table class="align-middle mb-0 table table-borderless table-striped table-hover">
                                         <thead>
@@ -575,6 +586,7 @@
 
                                             <?php
                                             require_once 'process/config.php';
+                                            require_once 'process/check_admin_session.php';
                                             
                                             try {
                                                 $stmt = $pdo->query("SELECT * FROM admin");
@@ -584,6 +596,10 @@
                                                 $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 
                                                 $allUsers = array_merge($admins, $customers);
+                                                
+                                                // Lấy thông tin về admin hiện tại
+                                                $currentAdminId = $_SESSION['user_id'];
+                                                $currentAdminRole = $_SESSION['role'];
                                                 
                                                 foreach ($allUsers as $user) {
                                                     $isAdmin = isset($user['admin_id']);
@@ -621,18 +637,29 @@
                                                         <td class=\"text-center\">
                                                             {$role}
                                                         </td>
-                                                        <td class=\"text-center\">
-                                                            <a href=\"./user-show.php?id={$userId}&type={$userType}\"
-                                                                class=\"btn btn-hover-shine btn-outline-primary border-0 btn-sm\">
-                                                                Details
-                                                            </a>
-                                                            <a href=\"./user-edit.php?id={$userId}&type={$userType}\" data-toggle=\"tooltip\" title=\"Edit\"
+                                                        <td class=\"text-center\">";
+                                                    
+                                                    // Hiển thị nút Details cho tất cả các trường hợp
+                                                    echo "<a href=\"./user-show.php?id={$userId}&type={$userType}\"
+                                                            class=\"btn btn-hover-shine btn-outline-primary border-0 btn-sm\">
+                                                            Details
+                                                        </a>";
+                                                    
+                                                    // Kiểm tra quyền chỉnh sửa
+                                                    if ($currentAdminRole == 'Super Admin' || 
+                                                        ($currentAdminRole == 'Admin' && ($userType == 'Customer' || $userId == $currentAdminId))) {
+                                                        echo "<a href=\"./user-edit.php?id={$userId}&type={$userType}\" data-toggle=\"tooltip\" title=\"Edit\"
                                                                 data-placement=\"bottom\" class=\"btn btn-outline-warning border-0 btn-sm\">
                                                                 <span class=\"btn-icon-wrapper opacity-8\">
                                                                     <i class=\"fa fa-edit fa-w-20\"></i>
                                                                 </span>
-                                                            </a>
-                                                            <form class=\"d-inline\" action=\"process/delete_user.php\" method=\"post\">
+                                                            </a>";
+                                                    }
+                                                    
+                                                    // Kiểm tra quyền xóa
+                                                    if ($currentAdminRole == 'Super Admin' || 
+                                                        ($currentAdminRole == 'Admin' && $userType == 'Customer')) {
+                                                        echo "<form class=\"d-inline\" action=\"process/delete_user.php\" method=\"post\">
                                                                 <input type=\"hidden\" name=\"user_id\" value=\"{$userId}\">
                                                                 <input type=\"hidden\" name=\"user_type\" value=\"{$userType}\">
                                                                 <button class=\"btn btn-hover-shine btn-outline-danger border-0 btn-sm\"
@@ -643,16 +670,16 @@
                                                                         <i class=\"fa fa-trash fa-w-20\"></i>
                                                                     </span>
                                                                 </button>
-                                                            </form>
-                                                        </td>
+                                                            </form>";
+                                                    }
+                                                    
+                                                    echo "</td>
                                                     </tr>";
                                                 }
                                             } catch (PDOException $e) {
                                                 echo "Error: " . $e->getMessage();
                                             }
                                             ?>
-
-                                            
                                         </tbody>
                                     </table>
                                 </div>

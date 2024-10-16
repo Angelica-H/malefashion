@@ -2,7 +2,68 @@
  require 'process/config.php';
  require 'process/check_admin_session.php';
  checkAdminSession();
-?>
+ 
+ $id = $_GET['id'] ?? null;
+ $type = $_GET['type'] ?? null;
+ 
+ if (!$id || !$type) {
+     echo "<div class='alert alert-danger'>Invalid user information.</div>";
+     exit();
+ }
+ 
+ try {
+     if ($type == 'Admin') {
+         $stmt = $pdo->prepare("SELECT * FROM admin WHERE admin_id = ?");
+     } else {
+         $stmt = $pdo->prepare("SELECT * FROM customers WHERE customer_id = ?");
+     }
+     $stmt->execute([$id]);
+     $user = $stmt->fetch(PDO::FETCH_ASSOC);
+ 
+     if (!$user) {
+         echo "<div class='alert alert-danger'>User not found.</div>";
+         exit();
+     }
+ 
+     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+         // Common fields for both Admin and Customer
+         $email = $_POST['email'];
+         
+         if ($type == 'Admin') {
+             $username = $_POST['username'];
+             $role = $_POST['role'];
+             
+             $updateStmt = $pdo->prepare("UPDATE admin SET username = ?, email = ?, role = ? WHERE admin_id = ?");
+             $updateStmt->execute([$username, $email, $role, $id]);
+         } else {
+             $first_name = $_POST['first_name'];
+             $last_name = $_POST['last_name'];
+             $phone_number = $_POST['phone_number'];
+             $shipping_address = $_POST['shipping_address'];
+             $billing_address = $_POST['billing_address'];
+             
+             $updateStmt = $pdo->prepare("UPDATE customers SET first_name = ?, last_name = ?, email = ?, phone_number = ?, shipping_address = ?, billing_address = ? WHERE customer_id = ?");
+             $updateStmt->execute([$first_name, $last_name, $email, $phone_number, $shipping_address, $billing_address, $id]);
+         }
+ 
+         if (!empty($_POST['password'])) {
+             $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+             $passwordStmt = $pdo->prepare("UPDATE " . ($type == 'Admin' ? 'admin' : 'customers') . " SET password = ? WHERE " . ($type == 'Admin' ? 'admin_id' : 'customer_id') . " = ?");
+             $passwordStmt->execute([$password, $id]);
+         }
+ 
+         echo "<div class='alert alert-success'>User updated successfully!</div>";
+         
+         // Refresh user data
+         $stmt->execute([$id]);
+         $user = $stmt->fetch(PDO::FETCH_ASSOC);
+     }
+ } catch (PDOException $e) {
+     echo "<div class='alert alert-danger'>Error: " . $e->getMessage() . "</div>";
+     exit();
+ }
+ ?>
+
  <!doctype html>
 <html lang="en">
 
@@ -527,133 +588,103 @@
                         <div class="col-md-12">
                             <div class="main-card mb-3 card">
                                 <div class="card-body">
-                                    <?php
-                                    if(isset($_GET['id']) && isset($_GET['type']) && $_GET['type'] == 'Customer') {
-                                        $customerId = $_GET['id'];
-                                        
-                                        // Fetch customer data
-                                        $stmt = $pdo->prepare("SELECT * FROM customers WHERE customer_id = ?");
-                                        $stmt->execute([$customerId]);
-                                        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                                        if($customer) {
-                                            // If form is submitted
-                                            if($_SERVER['REQUEST_METHOD'] == 'POST') {
-                                                // Validate and update customer data
-                                                $first_name = $_POST['first_name'];
-                                                $last_name = $_POST['last_name'];
-                                                $email = $_POST['email'];
-                                                $phone_number = $_POST['phone_number'];
-                                                $shipping_address = $_POST['shipping_address'];
-                                                $billing_address = $_POST['billing_address'];
-
-                                                $updateStmt = $pdo->prepare("UPDATE customers SET first_name = ?, last_name = ?, email = ?, phone_number = ?, shipping_address = ?, billing_address = ? WHERE customer_id = ?");
-                                                $updateStmt->execute([$first_name, $last_name, $email, $phone_number, $shipping_address, $billing_address, $customerId]);
-
-                                                if(!empty($_POST['password'])) {
-                                                    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-                                                    $passwordStmt = $pdo->prepare("UPDATE customers SET password = ? WHERE customer_id = ?");
-                                                    $passwordStmt->execute([$password, $customerId]);
-                                                }
-
-                                                echo "<div class='alert alert-success'>Customer updated successfully!</div>";
-                                                
-                                                // Refresh customer data
-                                                $stmt->execute([$customerId]);
-                                                $customer = $stmt->fetch(PDO::FETCH_ASSOC);
-                                            }
-                                    ?>
-                                    <form method="post" enctype="multipart/form-data">
-                                        <div class="position-relative row form-group">
-                                            <label for="first_name" class="col-md-3 text-md-right col-form-label">First Name</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="first_name" id="first_name" placeholder="First Name" type="text"
-                                                    class="form-control" value="<?php echo htmlspecialchars($customer['first_name']); ?>">
-                                            </div>
+                                   
+                                <form method="post" enctype="multipart/form-data">
+                                <?php if ($type == 'Admin'): ?>
+                                    <div class="position-relative row form-group">
+                                        <label for="username" class="col-md-3 text-md-right col-form-label">Username</label>
+                                        <div class="col-md-9 col-xl-8">
+                                            <input required name="username" id="username" placeholder="Username" type="text"
+                                                class="form-control" value="<?php echo htmlspecialchars($user['username']); ?>">
                                         </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="last_name" class="col-md-3 text-md-right col-form-label">Last Name</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="last_name" id="last_name" placeholder="Last Name" type="text"
-                                                    class="form-control" value="<?php echo htmlspecialchars($customer['last_name']); ?>">
-                                            </div>
+                                    </div>
+                            
+                                    <div class="position-relative row form-group">
+                                        <label for="role" class="col-md-3 text-md-right col-form-label">Role</label>
+                                        <div class="col-md-9 col-xl-8">
+                                            <select name="role" id="role" class="form-control">
+                                                <option value="Admin" <?php echo $user['role'] == 'Admin' ? 'selected' : ''; ?>>Admin</option>
+                                                <option value="Super Admin" <?php echo $user['role'] == 'Super Admin' ? 'selected' : ''; ?>>Super Admin</option>
+                                            </select>
                                         </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="email"
-                                                class="col-md-3 text-md-right col-form-label">Email</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="email" id="email" placeholder="Email" type="email"
-                                                    class="form-control" value="<?php echo htmlspecialchars($customer['email']); ?>">
-                                            </div>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="position-relative row form-group">
+                                        <label for="first_name" class="col-md-3 text-md-right col-form-label">First Name</label>
+                                        <div class="col-md-9 col-xl-8">
+                                            <input required name="first_name" id="first_name" placeholder="First Name" type="text"
+                                                class="form-control" value="<?php echo htmlspecialchars($user['first_name']); ?>">
                                         </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="phone_number"
-                                                class="col-md-3 text-md-right col-form-label">Phone</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="phone_number" id="phone_number" placeholder="Phone" type="tel"
-                                                    class="form-control" value="<?php echo htmlspecialchars($customer['phone_number']); ?>">
-                                            </div>
+                                    </div>
+                            
+                                    <div class="position-relative row form-group">
+                                        <label for="last_name" class="col-md-3 text-md-right col-form-label">Last Name</label>
+                                        <div class="col-md-9 col-xl-8">
+                                            <input required name="last_name" id="last_name" placeholder="Last Name" type="text"
+                                                class="form-control" value="<?php echo htmlspecialchars($user['last_name']); ?>">
                                         </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="password"
-                                                class="col-md-3 text-md-right col-form-label">Password</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input name="password" id="password" placeholder="Leave blank to keep current password" type="password"
-                                                    class="form-control" value="">
-                                            </div>
+                                    </div>
+                            
+                                    <div class="position-relative row form-group">
+                                        <label for="phone_number" class="col-md-3 text-md-right col-form-label">Phone</label>
+                                        <div class="col-md-9 col-xl-8">
+                                            <input required name="phone_number" id="phone_number" placeholder="Phone" type="tel"
+                                                class="form-control" value="<?php echo htmlspecialchars($user['phone_number']); ?>">
                                         </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="shipping_address" class="col-md-3 text-md-right col-form-label">
-                                                Shipping Address
-                                            </label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <textarea name="shipping_address" id="shipping_address"
-                                                    placeholder="Shipping Address" class="form-control"><?php echo htmlspecialchars($customer['shipping_address']); ?></textarea>
-                                            </div>
+                                    </div>
+                            
+                                    <div class="position-relative row form-group">
+                                        <label for="shipping_address" class="col-md-3 text-md-right col-form-label">Shipping Address</label>
+                                        <div class="col-md-9 col-xl-8">
+                                            <textarea name="shipping_address" id="shipping_address" placeholder="Shipping Address" 
+                                                class="form-control"><?php echo htmlspecialchars($user['shipping_address']); ?></textarea>
                                         </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="billing_address" class="col-md-3 text-md-right col-form-label">
-                                                Billing Address
-                                            </label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <textarea name="billing_address" id="billing_address"
-                                                    placeholder="Billing Address" class="form-control"><?php echo htmlspecialchars($customer['billing_address']); ?></textarea>
-                                            </div>
+                                    </div>
+                            
+                                    <div class="position-relative row form-group">
+                                        <label for="billing_address" class="col-md-3 text-md-right col-form-label">Billing Address</label>
+                                        <div class="col-md-9 col-xl-8">
+                                            <textarea name="billing_address" id="billing_address" placeholder="Billing Address" 
+                                                class="form-control"><?php echo htmlspecialchars($user['billing_address']); ?></textarea>
                                         </div>
-
-                                        <div class="position-relative row form-group mb-1">
-                                            <div class="col-md-9 col-xl-8 offset-md-2">
-                                                <a href="./index.php" class="border-0 btn btn-outline-danger mr-1">
-                                                    <span class="btn-icon-wrapper pr-1 opacity-8">
-                                                        <i class="fa fa-times fa-w-20"></i>
-                                                    </span>
-                                                    <span>Cancel</span>
-                                                </a>
-
-                                                <button type="submit"
-                                                    class="btn-shadow btn-hover-shine btn btn-primary">
-                                                    <span class="btn-icon-wrapper pr-2 opacity-8">
-                                                        <i class="fa fa-download fa-w-20"></i>
-                                                    </span>
-                                                    <span>Save</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                    <?php
-                                        } else {
-                                            echo "<div class='alert alert-danger'>Customer not found!</div>";
-                                        }
-                                    } else {
-                                        echo "<div class='alert alert-danger'>Invalid request!</div>";
-                                    }
-                                    ?>
+                                    </div>
+                                <?php endif; ?>
+                            
+                                <div class="position-relative row form-group">
+                                    <label for="email" class="col-md-3 text-md-right col-form-label">Email</label>
+                                    <div class="col-md-9 col-xl-8">
+                                        <input required name="email" id="email" placeholder="Email" type="email"
+                                            class="form-control" value="<?php echo htmlspecialchars($user['email']); ?>">
+                                    </div>
+                                </div>
+                            
+                                <div class="position-relative row form-group">
+                                    <label for="password" class="col-md-3 text-md-right col-form-label">Password</label>
+                                    <div class="col-md-9 col-xl-8">
+                                        <input name="password" id="password" placeholder="Leave blank to keep current password" type="password"
+                                            class="form-control" value="">
+                                    </div>
+                                </div>
+                            
+                                <div class="position-relative row form-group mb-1">
+                                    <div class="col-md-9 col-xl-8 offset-md-2">
+                                        <a href="./index.php" class="border-0 btn btn-outline-danger mr-1">
+                                            <span class="btn-icon-wrapper pr-1 opacity-8">
+                                                <i class="fa fa-times fa-w-20"></i>
+                                            </span>
+                                            <span>Cancel</span>
+                                        </a>
+                            
+                                        <button type="submit" class="btn-shadow btn-hover-shine btn btn-primary">
+                                            <span class="btn-icon-wrapper pr-2 opacity-8">
+                                                <i class="fa fa-download fa-w-20"></i>
+                                            </span>
+                                            <span>Save</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                                    
                                 </div>
                             </div>
                         </div>

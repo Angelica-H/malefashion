@@ -1,6 +1,5 @@
 <?php
 session_start();
-
 function checkAdminSession() {
     // Kiểm tra xem phiên đã được khởi tạo và có chứa user_id không
     if (!isset($_SESSION['user_id'])) {
