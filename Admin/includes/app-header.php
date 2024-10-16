@@ -35,7 +35,7 @@
                 <div class="app-header-left">
                     <div class="search-wrapper">
                         <div class="input-holder">
-                            <input type="text" class="search-input" placeholder="Type to search">
+                            <input type="text" class="search-input" placeholder="Nhập từ khóa tìm kiếm">
                             <button class="search-icon"><span></span></button>
                         </div>
                         <button class="close"></button>
@@ -44,7 +44,7 @@
                         <li class="nav-item">
                             <a href="javascript:void(0);" data-placement="bottom" rel="popover-focus" data-offset="300"
                                 data-toggle="popover-custom" class="nav-link">
-                                <i class="nav-link-icon pe-7s-gift"> </i> Mega Menu
+                                <i class="nav-link-icon pe-7s-gift"> </i> Menu Chính
                                 <i class="fa fa-angle-down ml-2 opacity-5"></i>
                             </a>
                             <div class="rm-max-width">
@@ -54,17 +54,17 @@
                                             <div class="no-gutters row">
                                                 <div class="col-sm-6 col-xl-4">
                                                     <ul class="nav flex-column">
-                                                        <li class="nav-item-header nav-item"> Overview</li>
+                                                        <li class="nav-item-header nav-item"> Tổng Quan</li>
                                                         <li class="nav-item">
                                                             <a href="javascript:void(0);" class="nav-link">
                                                                 <i class="nav-link-icon lnr-inbox"></i>
-                                                                <span> Contacts</span>
+                                                                <span> Liên Hệ</span>
                                                             </a>
                                                         </li>
                                                         <li class="nav-item">
                                                             <a href="javascript:void(0);" class="nav-link">
                                                                 <i class="nav-link-icon lnr-book"></i>
-                                                                <span> Incidents</span>
+                                                                <span> Sự Cố</span>
                                                                 <div class="ml-auto badge badge-pill badge-danger">5
                                                                 </div>
                                                             </a>
@@ -72,57 +72,55 @@
                                                         <li class="nav-item">
                                                             <a href="javascript:void(0);" class="nav-link">
                                                                 <i class="nav-link-icon lnr-picture"></i>
-                                                                <span> Companies</span>
+                                                                <span> Công Ty</span>
                                                             </a>
                                                         </li>
                                                         <li class="nav-item">
                                                             <a disabled="" href="javascript:void(0);"
                                                                 class="nav-link disabled">
                                                                 <i class="nav-link-icon lnr-file-empty"></i>
-                                                                <span> Dashboards</span>
+                                                                <span> Bảng Điều Khiển</span>
                                                             </a>
                                                         </li>
                                                     </ul>
                                                 </div>
                                                 <div class="col-sm-6 col-xl-4">
                                                     <ul class="nav flex-column">
-                                                        <li class="nav-item-header nav-item"> Favourites</li>
+                                                        <li class="nav-item-header nav-item"> Yêu Thích</li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link"> Reports
-                                                                Conversions </a>
+                                                            <a href="javascript:void(0);" class="nav-link"> Báo Cáo Chuyển Đổi </a>
                                                         </li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link"> Quick Start
-                                                                <div class="ml-auto badge badge-success">New</div>
+                                                            <a href="javascript:void(0);" class="nav-link"> Hướng Dẫn Nhanh
+                                                                <div class="ml-auto badge badge-success">Mới</div>
                                                             </a>
                                                         </li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Users &amp;
-                                                                Groups</a>
+                                                            <a href="javascript:void(0);" class="nav-link">Người Dùng &amp;
+                                                                Nhóm</a>
                                                         </li>
                                                         <li class="nav-item">
                                                             <a href="javascript:void(0);"
-                                                                class="nav-link">Proprieties</a>
+                                                                class="nav-link">Thuộc Tính</a>
                                                         </li>
                                                     </ul>
                                                 </div>
                                                 <div class="col-sm-6 col-xl-4">
                                                     <ul class="nav flex-column">
-                                                        <li class="nav-item-header nav-item">Sales &amp; Marketing</li>
+                                                        <li class="nav-item-header nav-item">Bán Hàng &amp; Tiếp Thị</li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Queues </a>
+                                                            <a href="javascript:void(0);" class="nav-link">Hàng Đợi </a>
                                                         </li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Resource
-                                                                Groups </a>
+                                                            <a href="javascript:void(0);" class="nav-link">Nhóm Tài Nguyên </a>
                                                         </li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Goal Metrics
+                                                            <a href="javascript:void(0);" class="nav-link">Chỉ Tiêu Mục Tiêu
                                                                 <div class="ml-auto badge badge-warning">3</div>
                                                             </a>
                                                         </li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Campaigns</a>
+                                                            <a href="javascript:void(0);" class="nav-link">Chiến Dịch</a>
                                                         </li>
                                                     </ul>
                                                 </div>
@@ -134,7 +132,7 @@
                         </li>
                         <li class="btn-group nav-item">
                             <a class="nav-link" data-toggle="dropdown" aria-expanded="false">
-                                <span class="badge badge-pill badge-danger ml-0 mr-2">4</span> Settings
+                                <span class="badge badge-pill badge-danger ml-0 mr-2">4</span> Cài Đặt
                                 <i class="fa fa-angle-down ml-2 opacity-5"></i>
                             </a>
                             <div tabindex="-1" role="menu" aria-hidden="true" class="rm-pointers dropdown-menu">
@@ -144,34 +142,33 @@
                                             style="background-image: url('assets/images/dropdown-header/abstract2.jpg');">
                                         </div>
                                         <div class="menu-header-content">
-                                            <h5 class="menu-header-title">Overview</h5>
-                                            <h6 class="menu-header-subtitle">Dropdown menus for everyone</h6>
+                                            <h5 class="menu-header-title">Tổng Quan</h5>
+                                            <h6 class="menu-header-subtitle">Menu thả xuống cho mọi người</h6>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="scroll-area-xs">
                                     <div class="scrollbar-container">
-                                        <h6 tabindex="-1" class="dropdown-header">Key Figures</h6>
-                                        <button type="button" tabindex="0" class="dropdown-item">Service
-                                            Calendar</button>
-                                        <button type="button" tabindex="0" class="dropdown-item">Knowledge Base</button>
-                                        <button type="button" tabindex="0" class="dropdown-item">Accounts</button>
+                                        <h6 tabindex="-1" class="dropdown-header">Chỉ Số Chính</h6>
+                                        <button type="button" tabindex="0" class="dropdown-item">Lịch Dịch Vụ</button>
+                                        <button type="button" tabindex="0" class="dropdown-item">Cơ Sở Kiến Thức</button>
+                                        <button type="button" tabindex="0" class="dropdown-item">Tài Khoản</button>
                                         <div tabindex="-1" class="dropdown-divider"></div>
-                                        <button type="button" tabindex="0" class="dropdown-item">Products</button>
-                                        <button type="button" tabindex="0" class="dropdown-item">Rollup Queries</button>
+                                        <button type="button" tabindex="0" class="dropdown-item">Sản Phẩm</button>
+                                        <button type="button" tabindex="0" class="dropdown-item">Truy Vấn Tổng Hợp</button>
                                     </div>
                                 </div>
                                 <ul class="nav flex-column">
                                     <li class="nav-item-divider nav-item"></li>
                                     <li class="nav-item-btn nav-item">
-                                        <button class="btn-wide btn-shadow btn btn-danger btn-sm">Cancel</button>
+                                        <button class="btn-wide btn-shadow btn btn-danger btn-sm">Hủy</button>
                                     </li>
                                 </ul>
                             </div>
                         </li>
                         <li class="dropdown nav-item">
                             <a aria-haspopup="true" data-toggle="dropdown" class="nav-link" aria-expanded="false">
-                                <i class="nav-link-icon pe-7s-settings"></i> Projects
+                                <i class="nav-link-icon pe-7s-settings"></i> Dự Án
                                 <i class="fa fa-angle-down ml-2 opacity-5"></i>
                             </a>
                             <div tabindex="-1" role="menu" aria-hidden="true"
@@ -182,10 +179,10 @@
                                             style="background-image: url('assets/images/dropdown-header/abstract3.jpg');">
                                         </div>
                                         <div class="menu-header-content text-left">
-                                            <h5 class="menu-header-title">Overview</h5>
-                                            <h6 class="menu-header-subtitle">Unlimited options</h6>
+                                            <h5 class="menu-header-title">Tổng Quan</h5>
+                                            <h6 class="menu-header-subtitle">Tùy chọn không giới hạn</h6>
                                             <div class="menu-header-btn-pane">
-                                                <button class="mr-2 btn btn-dark btn-sm">Settings</button>
+                                                <button class="mr-2 btn btn-dark btn-sm">Cài Đặt</button>
                                                 <button class="btn-icon btn-icon-only btn btn-warning btn-sm">
                                                     <i class="pe-7s-config btn-icon-wrapper"></i>
                                                 </button>
@@ -194,20 +191,20 @@
                                     </div>
                                 </div>
                                 <button type="button" tabindex="0" class="dropdown-item">
-                                    <i class="dropdown-icon lnr-file-empty"></i>Graphic Design
+                                    <i class="dropdown-icon lnr-file-empty"></i>Thiết Kế Đồ Họa
                                 </button>
                                 <button type="button" tabindex="0" class="dropdown-item">
-                                    <i class="dropdown-icon lnr-file-empty"> </i>App Development
+                                    <i class="dropdown-icon lnr-file-empty"> </i>Phát Triển Ứng Dụng
                                 </button>
                                 <button type="button" tabindex="0" class="dropdown-item">
-                                    <i class="dropdown-icon lnr-file-empty"> </i>Icon Design
+                                    <i class="dropdown-icon lnr-file-empty"> </i>Thiết Kế Icon
                                 </button>
                                 <div tabindex="-1" class="dropdown-divider"></div>
                                 <button type="button" tabindex="0" class="dropdown-item">
-                                    <i class="dropdown-icon lnr-file-empty"></i>Miscellaneous
+                                    <i class="dropdown-icon lnr-file-empty"></i>Khác
                                 </button>
                                 <button type="button" tabindex="0" class="dropdown-item">
-                                    <i class="dropdown-icon lnr-file-empty"></i>Frontend Dev
+                                    <i class="dropdown-icon lnr-file-empty"></i>Phát Triển Frontend
                                 </button>
                             </div>
                         </li>
@@ -231,8 +228,8 @@
                                             style="background-image: url('assets/images/dropdown-header/abstract4.jpg');">
                                         </div>
                                         <div class="menu-header-content text-white">
-                                            <h5 class="menu-header-title">Grid Dashboard</h5>
-                                            <h6 class="menu-header-subtitle">Easy grid navigation inside dropdowns</h6>
+                                            <h5 class="menu-header-title">Bảng Điều Khiển Lưới</h5>
+                                            <h6 class="menu-header-subtitle">Điều hướng lưới dễ dàng trong menu thả xuống</h6>
                                         </div>
                                     </div>
                                 </div>
@@ -243,7 +240,7 @@
                                                 class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
                                                 <i
                                                     class="pe-7s-world icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3"></i>
-                                                Automation
+                                                Tự Động Hóa
                                             </button>
                                         </div>
                                         <div class="col-sm-6 col-xl-4">
@@ -251,7 +248,7 @@
                                                 class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
                                                 <i
                                                     class="pe-7s-piggy icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3">
-                                                </i> Reports
+                                                </i> Báo Cáo
                                             </button>
                                         </div>
                                         <div class="col-sm-6 col-xl-4">
@@ -259,7 +256,7 @@
                                                 class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
                                                 <i
                                                     class="pe-7s-config icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3">
-                                                </i> Settings
+                                                </i> Cài Đặt
                                             </button>
                                         </div>
                                         <div class="col-sm-6 col-xl-4">
@@ -267,7 +264,7 @@
                                                 class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
                                                 <i
                                                     class="pe-7s-browser icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3">
-                                                </i> Content
+                                                </i> Nội Dung
                                             </button>
                                         </div>
                                         <div class="col-sm-6 col-xl-4">
@@ -275,7 +272,7 @@
                                                 class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
                                                 <i
                                                     class="pe-7s-hourglass icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3"></i>
-                                                Activity
+                                                Hoạt Động
                                             </button>
                                         </div>
                                         <div class="col-sm-6 col-xl-4">
@@ -283,7 +280,7 @@
                                                 class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
                                                 <i
                                                     class="pe-7s-world icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3">
-                                                </i> Contacts
+                                                </i> Liên Hệ
                                             </button>
                                         </div>
                                     </div>
@@ -291,7 +288,7 @@
                                 <ul class="nav flex-column">
                                     <li class="nav-item-divider nav-item"></li>
                                     <li class="nav-item-btn text-center nav-item">
-                                        <button class="btn-shadow btn btn-primary btn-sm">Follow-ups</button>
+                                        <button class="btn-shadow btn btn-primary btn-sm">Theo Dõi</button>
                                     </li>
                                 </ul>
                             </div>
@@ -302,7 +299,7 @@
                                 <span class="icon-wrapper icon-wrapper-alt rounded-circle">
                                     <span class="icon-wrapper-bg bg-danger"></span>
                                     <i class="icon text-danger icon-anim-pulse ion-android-notifications"></i>
-                                    <span class="badge badge-dot badge-dot-sm badge-danger">Notifications</span>
+                                    <span class="badge badge-dot badge-dot-sm badge-danger">Thông Báo</span>
                                 </span>
                             </button>
                             <div tabindex="-1" role="menu" aria-hidden="true"
@@ -313,8 +310,8 @@
                                             style="background-image: url('assets/images/dropdown-header/city3.jpg');">
                                         </div>
                                         <div class="menu-header-content text-dark">
-                                            <h5 class="menu-header-title">Notifications</h5>
-                                            <h6 class="menu-header-subtitle">You have <b>21</b> unread messages</h6>
+                                            <h5 class="menu-header-title">Thông Báo</h5>
+                                            <h6 class="menu-header-subtitle">Bạn có <b>21</b> tin nhắn chưa đọc</h6>
                                         </div>
                                     </div>
                                 </div>
@@ -323,17 +320,17 @@
                                     <li class="nav-item">
                                         <a role="tab" class="nav-link active" data-toggle="tab"
                                             href="#tab-messages-header">
-                                            <span>Messages</span>
+                                            <span>Tin Nhắn</span>
                                         </a>
                                     </li>
                                     <li class="nav-item">
                                         <a role="tab" class="nav-link" data-toggle="tab" href="#tab-events-header">
-                                            <span>Events</span>
+                                            <span>Sự Kiện</span>
                                         </a>
                                     </li>
                                     <li class="nav-item">
                                         <a role="tab" class="nav-link" data-toggle="tab" href="#tab-errors-header">
-                                            <span>System Errors</span>
+                                            <span>Lỗi Hệ Thống</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -351,7 +348,7 @@
                                                                         class="vertical-timeline-element-icon bounce-in"></span>
                                                                     <div
                                                                         class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">All Hands Meeting
+                                                                        <h4 class="timeline-title">Cuộc Họp Toàn Thể
                                                                         </h4>
                                                                         <span
                                                                             class="vertical-timeline-element-date"></span>
@@ -365,7 +362,7 @@
                                                                         class="vertical-timeline-element-icon bounce-in"></span>
                                                                     <div
                                                                         class="vertical-timeline-element-content bounce-in">
-                                                                        <p>Yet another one, at <span
+                                                                        <p>Một thông báo khác lúc <span
                                                                                 class="text-success">15:00 PM</span></p>
                                                                         <span
                                                                             class="vertical-timeline-element-date"></span>
@@ -379,10 +376,9 @@
                                                                         class="vertical-timeline-element-icon bounce-in"></span>
                                                                     <div
                                                                         class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">Build the production
-                                                                            release
+                                                                        <h4 class="timeline-title">Xây dựng phiên bản sản xuất
                                                                             <span
-                                                                                class="badge badge-danger ml-2">NEW</span>
+                                                                                class="badge badge-danger ml-2">MỚI</span>
                                                                         </h4>
                                                                         <span
                                                                             class="vertical-timeline-element-date"></span>
@@ -396,8 +392,7 @@
                                                                         class="vertical-timeline-element-icon bounce-in"></span>
                                                                     <div
                                                                         class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">Something not
-                                                                            important
+                                                                        <h4 class="timeline-title">Điều gì đó không quan trọng
                                                                             <div
                                                                                 class="avatar-wrapper mt-2 avatar-wrapper-overlap">
                                                                                 <div
@@ -475,8 +470,8 @@
                                                                         class="vertical-timeline-element-icon bounce-in"></span>
                                                                     <div
                                                                         class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">This dot has an info
-                                                                            state</h4>
+                                                                        <h4 class="timeline-title">Điểm này có trạng thái thông tin
+                                                                        </h4>
                                                                         <span
                                                                             class="vertical-timeline-element-date"></span>
                                                                     </div>
@@ -489,7 +484,7 @@
                                                                         class="vertical-timeline-element-icon bounce-in"></span>
                                                                     <div
                                                                         class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">All Hands Meeting
+                                                                        <h4 class="timeline-title">Cuộc Họp Toàn Thể
                                                                         </h4>
                                                                         <span
                                                                             class="vertical-timeline-element-date"></span>
@@ -503,7 +498,7 @@
                                                                         class="vertical-timeline-element-icon bounce-in"></span>
                                                                     <div
                                                                         class="vertical-timeline-element-content bounce-in">
-                                                                        <p>Yet another one, at <span
+                                                                        <p>Một thông báo khác lúc <span
                                                                                 class="text-success">15:00 PM</span>
                                                                         </p><span
                                                                             class="vertical-timeline-element-date"></span>
@@ -516,10 +511,9 @@
                                                                         class="vertical-timeline-element-icon bounce-in"></span>
                                                                     <div
                                                                         class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">Build the production
-                                                                            release
+                                                                        <h4 class="timeline-title">Xây dựng phiên bản sản xuất
                                                                             <span
-                                                                                class="badge badge-danger ml-2">NEW</span>
+                                                                                class="badge badge-danger ml-2">MỚI</span>
                                                                         </h4>
                                                                         <span
                                                                             class="vertical-timeline-element-date"></span>
@@ -532,8 +526,8 @@
                                                                         class="vertical-timeline-element-icon bounce-in"></span>
                                                                     <div
                                                                         class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">This dot has a dark
-                                                                            state</h4>
+                                                                        <h4 class="timeline-title">Điểm này có trạng thái tối
+                                                                        </h4>
                                                                         <span
                                                                             class="vertical-timeline-element-date"></span>
                                                                     </div>
@@ -560,8 +554,8 @@
                                                                 </span>
                                                                 <div
                                                                     class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title">All Hands Meeting</h4>
-                                                                    <p>Lorem ipsum dolor sic amet, today at
+                                                                    <h4 class="timeline-title">Cuộc họp toàn thể</h4>
+                                                                    <p>Hôm nay lúc
                                                                         <a href="javascript:void(0);">12:00 PM</a>
                                                                     </p>
                                                                     <span class="vertical-timeline-element-date"></span>
@@ -577,9 +571,9 @@
                                                                 </span>
                                                                 <div
                                                                     class="vertical-timeline-element-content bounce-in">
-                                                                    <p>Another meeting today, at <b
+                                                                    <p>Một cuộc họp khác hôm nay, lúc <b
                                                                             class="text-danger">12:00 PM</b></p>
-                                                                    <p>Yet another one, at <span
+                                                                    <p>Và một cuộc họp nữa, lúc <span
                                                                             class="text-success">15:00 PM</span></p>
                                                                     <span class="vertical-timeline-element-date"></span>
                                                                 </div>
@@ -594,13 +588,8 @@
                                                                 </span>
                                                                 <div
                                                                     class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title">Build the production
-                                                                        release</h4>
-                                                                    <p>Lorem ipsum dolor sit amit,consectetur eiusmdd
-                                                                        tempor incididunt ut
-                                                                        labore et dolore magna elit enim at minim veniam
-                                                                        quis nostrud
-                                                                    </p>
+                                                                    <h4 class="timeline-title">Xây dựng phiên bản sản phẩm</h4>
+                                                                    <p>Quá trình phát triển sản phẩm đang diễn ra suôn sẻ. Đội ngũ kỹ thuật đang nỗ lực hoàn thiện các tính năng mới và tối ưu hóa hiệu suất. Dự kiến sẽ ra mắt phiên bản beta trong tuần tới.</p>
                                                                     <span class="vertical-timeline-element-date"></span>
                                                                 </div>
                                                             </div>
@@ -614,10 +603,8 @@
                                                                 </span>
                                                                 <div
                                                                     class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title text-success">Something
-                                                                        not important</h4>
-                                                                    <p>Lorem ipsum dolor sit amit,consectetur elit enim
-                                                                        at minim veniam quis nostrud</p>
+                                                                    <h4 class="timeline-title text-success">Cập nhật nhỏ</h4>
+                                                                    <p>Một số cải tiến nhỏ đã được thực hiện để nâng cao trải nghiệm người dùng. Chi tiết sẽ được thông báo trong buổi họp sắp tới.</p>
                                                                     <span class="vertical-timeline-element-date"></span>
                                                                 </div>
                                                             </div>
@@ -631,8 +618,8 @@
                                                                 </span>
                                                                 <div
                                                                     class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title">All Hands Meeting</h4>
-                                                                    <p>Lorem ipsum dolor sic amet, today at
+                                                                    <h4 class="timeline-title">Cuộc họp toàn thể</h4>
+                                                                    <p>Hôm nay lúc
                                                                         <a href="javascript:void(0);">12:00 PM</a>
                                                                     </p>
                                                                     <span class="vertical-timeline-element-date"></span>
@@ -648,9 +635,9 @@
                                                                 </span>
                                                                 <div
                                                                     class="vertical-timeline-element-content bounce-in">
-                                                                    <p>Another meeting today, at <b
+                                                                    <p>Một cuộc họp khác hôm nay, lúc <b
                                                                             class="text-danger">12:00 PM</b></p>
-                                                                    <p>Yet another one, at <span
+                                                                    <p>Và một cuộc họp nữa, lúc <span
                                                                             class="text-success">15:00 PM</span></p>
                                                                     <span class="vertical-timeline-element-date"></span>
                                                                 </div>
@@ -665,13 +652,8 @@
                                                                 </span>
                                                                 <div
                                                                     class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title">Build the production
-                                                                        release</h4>
-                                                                    <p>Lorem ipsum dolor sit amit,consectetur eiusmdd
-                                                                        tempor incididunt ut
-                                                                        labore et dolore magna elit enim at minim veniam
-                                                                        quis nostrud
-                                                                    </p>
+                                                                    <h4 class="timeline-title">Xây dựng phiên bản sản phẩm</h4>
+                                                                    <p>Quá trình phát triển sản phẩm đang tiến triển tốt. Đội ngũ kỹ thuật đang tập trung vào việc tối ưu hóa hiệu suất và sửa lỗi. Dự kiến sẽ hoàn thành đúng tiến độ đã đề ra.</p>
                                                                     <span class="vertical-timeline-element-date"></span>
                                                                 </div>
                                                             </div>
@@ -685,10 +667,8 @@
                                                                 </span>
                                                                 <div
                                                                     class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title text-success">Something
-                                                                        not important</h4>
-                                                                    <p>Lorem ipsum dolor sit amit,consectetur elit enim
-                                                                        at minim veniam quis nostrud</p>
+                                                                    <h4 class="timeline-title text-success">Cập nhật nhỏ</h4>
+                                                                    <p>Một số cải tiến nhỏ đã được thực hiện để nâng cao trải nghiệm người dùng. Các thay đổi này sẽ được triển khai trong bản cập nhật tiếp theo.</p>
                                                                     <span class="vertical-timeline-element-date"></span>
                                                                 </div>
                                                             </div>
@@ -713,8 +693,8 @@
                                                         <div class="swal2-success-circular-line-right"
                                                             style="background-color: rgb(255, 255, 255);"></div>
                                                     </div>
-                                                    <div class="results-subtitle">All caught up!</div>
-                                                    <div class="results-title">There are no system errors!</div>
+                                                    <div class="results-subtitle">Tất cả đã được cập nhật!</div>
+                                                    <div class="results-title">Không có lỗi hệ thống nào!</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -723,8 +703,7 @@
                                 <ul class="nav flex-column">
                                     <li class="nav-item-divider nav-item"></li>
                                     <li class="nav-item-btn text-center nav-item">
-                                        <button class="btn-shadow btn-wide btn-pill btn btn-focus btn-sm">View Latest
-                                            Changes</button>
+                                        <button class="btn-shadow btn-wide btn-pill btn btn-focus btn-sm">Xem các thay đổi mới nhất</button>
                                     </li>
                                 </ul>
                             </div>
@@ -744,30 +723,30 @@
                                             style="background-image: url('assets/images/dropdown-header/city2.jpg');">
                                         </div>
                                         <div class="menu-header-content text-center text-white">
-                                            <h6 class="menu-header-subtitle mt-0"> Choose Language</h6>
+                                            <h6 class="menu-header-subtitle mt-0">Chọn ngôn ngữ</h6>
                                         </div>
                                     </div>
                                 </div>
-                                <h6 tabindex="-1" class="dropdown-header"> Popular Languages</h6>
+                                <h6 tabindex="-1" class="dropdown-header">Ngôn ngữ phổ biến</h6>
                                 <button type="button" tabindex="0" class="dropdown-item">
-                                    <span class="mr-3 opacity-8 flag large US"></span> USA
+                                    <span class="mr-3 opacity-8 flag large US"></span> Tiếng Anh
                                 </button>
                                 <button type="button" tabindex="0" class="dropdown-item">
-                                    <span class="mr-3 opacity-8 flag large CH"></span> Switzerland
+                                    <span class="mr-3 opacity-8 flag large CH"></span> Tiếng Trung
                                 </button>
                                 <button type="button" tabindex="0" class="dropdown-item">
-                                    <span class="mr-3 opacity-8 flag large FR"></span> France
+                                    <span class="mr-3 opacity-8 flag large FR"></span> Tiếng Pháp
                                 </button>
                                 <button type="button" tabindex="0" class="dropdown-item">
-                                    <span class="mr-3 opacity-8 flag large ES"></span>Spain
+                                    <span class="mr-3 opacity-8 flag large ES"></span> Tiếng Tây Ban Nha
                                 </button>
                                 <div tabindex="-1" class="dropdown-divider"></div>
-                                <h6 tabindex="-1" class="dropdown-header">Others</h6>
+                                <h6 tabindex="-1" class="dropdown-header">Ngôn ngữ khác</h6>
                                 <button type="button" tabindex="0" class="dropdown-item active">
-                                    <span class="mr-3 opacity-8 flag large DE"></span> Germany
+                                    <span class="mr-3 opacity-8 flag large DE"></span> Tiếng Đức
                                 </button>
                                 <button type="button" tabindex="0" class="dropdown-item">
-                                    <span class="mr-3 opacity-8 flag large IT"></span> Italy
+                                    <span class="mr-3 opacity-8 flag large IT"></span> Tiếng Ý
                                 </button>
                             </div>
                         </div>
@@ -787,8 +766,8 @@
                                             style="background-image: url('assets/images/dropdown-header/abstract4.jpg');">
                                         </div>
                                         <div class="menu-header-content text-white">
-                                            <h5 class="menu-header-title">Users Online</h5>
-                                            <h6 class="menu-header-subtitle">Recent Account Activity Overview</h6>
+                                            <h5 class="menu-header-title">Người dùng trực tuyến</h5>
+                                            <h6 class="menu-header-subtitle">Tổng quan hoạt động tài khoản gần đây</h6>
                                         </div>
                                     </div>
                                 </div>
@@ -802,7 +781,7 @@
                                             <span>344k</span>
                                         </div>
                                         <div class="widget-subheading pt-2">
-                                            Profile views since last login
+                                            Lượt xem hồ sơ kể từ lần đăng nhập cuối
                                         </div>
                                         <div class="widget-description text-danger">
                                             <span class="pr-1"><span>176%</span></span>
@@ -817,7 +796,7 @@
                                     <li class="nav-item-divider mt-0 nav-item"></li>
                                     <li class="nav-item-btn text-center nav-item">
                                         <button class="btn-shine btn-wide btn-pill btn btn-warning btn-sm">
-                                            <i class="fa fa-cog fa-spin mr-2"></i>View Details
+                                            <i class="fa fa-cog fa-spin mr-2"></i>Xem chi tiết
                                         </button>
                                     </li>
                                 </ul>
@@ -851,12 +830,12 @@
                                                                         src="assets/images/avatars/admin.jpg" alt="">
                                                                 </div>
                                                                 <div class="widget-content-left">
-                                                                    <div class="widget-heading"><?php echo isset($_SESSION['username']) ? htmlspecialchars($_SESSION['username']) : 'Guest'; ?></div>
-                                                                    <div class="widget-subheading opacity-8"><?php echo isset($_SESSION['role']) ? htmlspecialchars($_SESSION['role']) : 'No Role'; ?></div>
+                                                                    <div class="widget-heading"><?php echo isset($_SESSION['username']) ? htmlspecialchars($_SESSION['username']) : 'Khách'; ?></div>
+                                                                    <div class="widget-subheading opacity-8"><?php echo isset($_SESSION['role']) ? htmlspecialchars($_SESSION['role']) : 'Không có vai trò'; ?></div>
                                                                 </div>
                                                                 <div class="widget-content-right mr-2">
                                     <form action="process/process_logout.php" method="POST" style="display:inline;">
-                                        <button class="btn-pill btn-shadow btn-shine btn btn-focus" type="submit">Logout</button>
+                                        <button class="btn-pill btn-shadow btn-shine btn btn-focus" type="submit">Đăng xuất</button>
                                     </form>
                                 </div>
                                                             </div>
@@ -867,29 +846,29 @@
                                             <div class="scroll-area-xs" style="height: 150px;">
                                                 <div class="scrollbar-container ps">
                                                     <ul class="nav flex-column">
-                                                        <li class="nav-item-header nav-item">Activity</li>
+                                                        <li class="nav-item-header nav-item">Hoạt động</li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Chat
+                                                            <a href="javascript:void(0);" class="nav-link">Trò chuyện
                                                                 <div class="ml-auto badge badge-pill badge-info">8</div>
                                                             </a>
                                                         </li>
                                                         <li class="nav-item">
-    <a href="recover-password.php" class="nav-link">Recover Password</a>
+    <a href="recover-password.php" class="nav-link">Khôi phục mật khẩu</a>
 </li>
-                                                        <li class="nav-item-header nav-item">My Account
+                                                        <li class="nav-item-header nav-item">Tài khoản của tôi
                                                         </li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Settings
-                                                                <div class="ml-auto badge badge-success">New</div>
+                                                            <a href="javascript:void(0);" class="nav-link">Cài đặt
+                                                                <div class="ml-auto badge badge-success">Mới</div>
                                                             </a>
                                                         </li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Messages
+                                                            <a href="javascript:void(0);" class="nav-link">Tin nhắn
                                                                 <div class="ml-auto badge badge-warning">512</div>
                                                             </a>
                                                         </li>
                                                         <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Logs</a>
+                                                            <a href="javascript:void(0);" class="nav-link">Nhật ký</a>
                                                         </li>
                                                     </ul>
                                                 </div>
@@ -904,7 +883,7 @@
                                                             class="btn-icon-vertical btn-transition btn-transition-alt pt-2 pb-2 btn btn-outline-warning">
                                                             <i
                                                                 class="pe-7s-chat icon-gradient bg-amy-crisp btn-icon-wrapper mb-2"></i>
-                                                            Message Inbox
+                                                            Hộp thư đến
                                                         </button>
                                                     </div>
                                                     <div class="col-sm-6">
@@ -912,7 +891,7 @@
                                                             class="btn-icon-vertical btn-transition btn-transition-alt pt-2 pb-2 btn btn-outline-danger">
                                                             <i
                                                                 class="pe-7s-ticket icon-gradient bg-love-kiss btn-icon-wrapper mb-2"></i>
-                                                            <b>Support Tickets</b>
+                                                            <b>Hỗ trợ kỹ thuật</b>
                                                         </button>
                                                     </div>
                                                 </div>
@@ -921,7 +900,7 @@
                                                 <li class="nav-item-divider nav-item">
                                                 </li>
                                                 <li class="nav-item-btn text-center nav-item">
-                                                    <button class="btn-wide btn btn-primary btn-sm"> Open Messages
+                                                    <button class="btn-wide btn btn-primary btn-sm"> Mở tin nhắn
                                                     </button>
                                                 </li>
                                             </ul>

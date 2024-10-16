@@ -28,7 +28,7 @@
 
 <body>
     <div class="app-container app-theme-white body-tabs-shadow fixed-header fixed-sidebar">
-        <?php include 'includes/app-header.php'; ?>
+    <?php include 'includes/app-header.php'; ?>
 
         <div class="ui-theme-settings">
             <button type="button" id="TooltipDemo" class="btn-open-options btn btn-warning">
@@ -527,29 +527,56 @@
                         <div class="col-md-12">
                             <div class="main-card mb-3 card">
                                 <div class="card-body">
+                                    <?php
+                                    if(isset($_GET['id']) && isset($_GET['type']) && $_GET['type'] == 'Customer') {
+                                        $customerId = $_GET['id'];
+                                        
+                                        // Fetch customer data
+                                        $stmt = $pdo->prepare("SELECT * FROM customers WHERE customer_id = ?");
+                                        $stmt->execute([$customerId]);
+                                        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                                        if($customer) {
+                                            // If form is submitted
+                                            if($_SERVER['REQUEST_METHOD'] == 'POST') {
+                                                // Validate and update customer data
+                                                $first_name = $_POST['first_name'];
+                                                $last_name = $_POST['last_name'];
+                                                $email = $_POST['email'];
+                                                $phone_number = $_POST['phone_number'];
+                                                $shipping_address = $_POST['shipping_address'];
+                                                $billing_address = $_POST['billing_address'];
+
+                                                $updateStmt = $pdo->prepare("UPDATE customers SET first_name = ?, last_name = ?, email = ?, phone_number = ?, shipping_address = ?, billing_address = ? WHERE customer_id = ?");
+                                                $updateStmt->execute([$first_name, $last_name, $email, $phone_number, $shipping_address, $billing_address, $customerId]);
+
+                                                if(!empty($_POST['password'])) {
+                                                    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+                                                    $passwordStmt = $pdo->prepare("UPDATE customers SET password = ? WHERE customer_id = ?");
+                                                    $passwordStmt->execute([$password, $customerId]);
+                                                }
+
+                                                echo "<div class='alert alert-success'>Customer updated successfully!</div>";
+                                                
+                                                // Refresh customer data
+                                                $stmt->execute([$customerId]);
+                                                $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+                                            }
+                                    ?>
                                     <form method="post" enctype="multipart/form-data">
                                         <div class="position-relative row form-group">
-                                            <label for="image"
-                                                class="col-md-3 text-md-right col-form-label">Avatar</label>
+                                            <label for="first_name" class="col-md-3 text-md-right col-form-label">First Name</label>
                                             <div class="col-md-9 col-xl-8">
-                                                <img style="height: 200px; cursor: pointer;"
-                                                    class="thumbnail rounded-circle" data-toggle="tooltip"
-                                                    title="Click to change the image" data-placement="bottom"
-                                                    src="assets/images/_default-user.png" alt="Avatar">
-                                                <input name="image" type="file" onchange="changeImg(this)"
-                                                    class="image form-control-file" style="display: none;" value="">
-                                                <input type="hidden" name="image_old" value="">
-                                                <small class="form-text text-muted">
-                                                    Click on the image to change (required)
-                                                </small>
+                                                <input required name="first_name" id="first_name" placeholder="First Name" type="text"
+                                                    class="form-control" value="<?php echo htmlspecialchars($customer['first_name']); ?>">
                                             </div>
                                         </div>
 
                                         <div class="position-relative row form-group">
-                                            <label for="name" class="col-md-3 text-md-right col-form-label">Name</label>
+                                            <label for="last_name" class="col-md-3 text-md-right col-form-label">Last Name</label>
                                             <div class="col-md-9 col-xl-8">
-                                                <input required name="name" id="name" placeholder="Name" type="text"
-                                                    class="form-control" value="">
+                                                <input required name="last_name" id="last_name" placeholder="Last Name" type="text"
+                                                    class="form-control" value="<?php echo htmlspecialchars($customer['last_name']); ?>">
                                             </div>
                                         </div>
 
@@ -558,7 +585,16 @@
                                                 class="col-md-3 text-md-right col-form-label">Email</label>
                                             <div class="col-md-9 col-xl-8">
                                                 <input required name="email" id="email" placeholder="Email" type="email"
-                                                    class="form-control" value="">
+                                                    class="form-control" value="<?php echo htmlspecialchars($customer['email']); ?>">
+                                            </div>
+                                        </div>
+
+                                        <div class="position-relative row form-group">
+                                            <label for="phone_number"
+                                                class="col-md-3 text-md-right col-form-label">Phone</label>
+                                            <div class="col-md-9 col-xl-8">
+                                                <input required name="phone_number" id="phone_number" placeholder="Phone" type="tel"
+                                                    class="form-control" value="<?php echo htmlspecialchars($customer['phone_number']); ?>">
                                             </div>
                                         </div>
 
@@ -566,111 +602,34 @@
                                             <label for="password"
                                                 class="col-md-3 text-md-right col-form-label">Password</label>
                                             <div class="col-md-9 col-xl-8">
-                                                <input name="password" id="password" placeholder="Password" type="password"
+                                                <input name="password" id="password" placeholder="Leave blank to keep current password" type="password"
                                                     class="form-control" value="">
                                             </div>
                                         </div>
 
                                         <div class="position-relative row form-group">
-                                            <label for="password_confirmation"
-                                                class="col-md-3 text-md-right col-form-label">Confirm Password</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input name="password_confirmation" id="password_confirmation" placeholder="Confirm Password" type="password"
-                                                    class="form-control" value="">
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="company_name" class="col-md-3 text-md-right col-form-label">
-                                                Company Name
+                                            <label for="shipping_address" class="col-md-3 text-md-right col-form-label">
+                                                Shipping Address
                                             </label>
                                             <div class="col-md-9 col-xl-8">
-                                                <input name="company_name" id="company_name"
-                                                    placeholder="Company Name" type="text" class="form-control"
-                                                    value="">
+                                                <textarea name="shipping_address" id="shipping_address"
+                                                    placeholder="Shipping Address" class="form-control"><?php echo htmlspecialchars($customer['shipping_address']); ?></textarea>
                                             </div>
                                         </div>
 
                                         <div class="position-relative row form-group">
-                                            <label for="country"
-                                                class="col-md-3 text-md-right col-form-label">Country</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input name="country" id="country" placeholder="Country"
-                                                    type="text" class="form-control" value="">
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="street_address" class="col-md-3 text-md-right col-form-label">
-                                                Street Address
+                                            <label for="billing_address" class="col-md-3 text-md-right col-form-label">
+                                                Billing Address
                                             </label>
                                             <div class="col-md-9 col-xl-8">
-                                                <input name="street_address" id="street_address"
-                                                    placeholder="Street Address" type="text" class="form-control"
-                                                    value="">
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="postcode_zip" class="col-md-3 text-md-right col-form-label">
-                                                Postcode Zip
-                                            </label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input name="postcode_zip" id="postcode_zip"
-                                                    placeholder="Postcode Zip" type="text" class="form-control"
-                                                    value="">
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="town_city" class="col-md-3 text-md-right col-form-label">
-                                                Town City
-                                            </label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input name="town_city" id="town_city" placeholder="Town City"
-                                                    type="text" class="form-control" value="">
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="phone"
-                                                class="col-md-3 text-md-right col-form-label">Phone</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="phone" id="phone" placeholder="Phone" type="tel"
-                                                    class="form-control" value="">
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="level"
-                                                class="col-md-3 text-md-right col-form-label">Level</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <select required name="level" id="level" class="form-control">
-                                                    <option value="">-- Level --</option>
-                                                    <option value=0>
-                                                        Host
-                                                    </option>
-                                                    <option value=1>
-                                                        Admin
-                                                    </option>
-                                                    <option value=2>
-                                                        Client
-                                                    </option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="description"
-                                                   class="col-md-3 text-md-right col-form-label">Description</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <textarea name="description" id="description" class="form-control"></textarea>
+                                                <textarea name="billing_address" id="billing_address"
+                                                    placeholder="Billing Address" class="form-control"><?php echo htmlspecialchars($customer['billing_address']); ?></textarea>
                                             </div>
                                         </div>
 
                                         <div class="position-relative row form-group mb-1">
                                             <div class="col-md-9 col-xl-8 offset-md-2">
-                                                <a href="#" class="border-0 btn btn-outline-danger mr-1">
+                                                <a href="./index.php" class="border-0 btn btn-outline-danger mr-1">
                                                     <span class="btn-icon-wrapper pr-1 opacity-8">
                                                         <i class="fa fa-times fa-w-20"></i>
                                                     </span>
@@ -687,6 +646,14 @@
                                             </div>
                                         </div>
                                     </form>
+                                    <?php
+                                        } else {
+                                            echo "<div class='alert alert-danger'>Customer not found!</div>";
+                                        }
+                                    } else {
+                                        echo "<div class='alert alert-danger'>Invalid request!</div>";
+                                    }
+                                    ?>
                                 </div>
                             </div>
                         </div>

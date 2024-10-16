@@ -573,54 +573,84 @@
                                         </thead>
                                         <tbody>
 
-                                            <tr>
-                                                <td class="text-center text-muted">#01</td>
-                                                <td>
-                                                    <div class="widget-content p-0">
-                                                        <div class="widget-content-wrapper">
-                                                            <div class="widget-content-left mr-3">
-                                                                <div class="widget-content-left">
-                                                                    <img width="40" class="rounded-circle"
-                                                                        data-toggle="tooltip" title="Image"
-                                                                        data-placement="bottom"
-                                                                        src="assets/images/_default-user.png" alt="">
+                                            <?php
+                                            require_once 'process/config.php';
+                                            
+                                            try {
+                                                $stmt = $pdo->query("SELECT * FROM admin");
+                                                $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                                
+                                                $stmt = $pdo->query("SELECT * FROM customers");
+                                                $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                                
+                                                $allUsers = array_merge($admins, $customers);
+                                                
+                                                foreach ($allUsers as $user) {
+                                                    $isAdmin = isset($user['admin_id']);
+                                                    $userId = $isAdmin ? $user['admin_id'] : $user['customer_id'];
+                                                    $userType = $isAdmin ? 'Admin' : 'Customer';
+                                                    
+                                                    if ($isAdmin) {
+                                                        $fullName = $user['username'];
+                                                        $role = $user['role'];
+                                                    } else {
+                                                        $fullName = $user['first_name'] . ' ' . $user['last_name'];
+                                                        $role = 'Customer';
+                                                    }
+                                                    
+                                                    echo "<tr>
+                                                        <td class=\"text-center text-muted\">#{$userId}</td>
+                                                        <td>
+                                                            <div class=\"widget-content p-0\">
+                                                                <div class=\"widget-content-wrapper\">
+                                                                    <div class=\"widget-content-left mr-3\">
+                                                                        <div class=\"widget-content-left\">
+                                                                            <img width=\"40\" class=\"rounded-circle\"
+                                                                                data-toggle=\"tooltip\" title=\"Image\"
+                                                                                data-placement=\"bottom\"
+                                                                                src=\"assets/images/_default-user.png\" alt=\"\">
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class=\"widget-content-left flex2\">
+                                                                        <div class=\"widget-heading\">{$fullName}</div>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                            <div class="widget-content-left flex2">
-                                                                <div class="widget-heading">CodeLean</div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="text-center">info@CodeLean.vn</td>
-                                                <td class="text-center">
-                                                    Admin
-                                                </td>
-                                                <td class="text-center">
-                                                    <a href="./user-show.php
-"
-                                                        class="btn btn-hover-shine btn-outline-primary border-0 btn-sm">
-                                                        Details
-                                                    </a>
-                                                    <a href="./user-edit.php
-" data-toggle="tooltip" title="Edit"
-                                                        data-placement="bottom" class="btn btn-outline-warning border-0 btn-sm">
-                                                        <span class="btn-icon-wrapper opacity-8">
-                                                            <i class="fa fa-edit fa-w-20"></i>
-                                                        </span>
-                                                    </a>
-                                                    <form class="d-inline" action="" method="post">
-                                                        <button class="btn btn-hover-shine btn-outline-danger border-0 btn-sm"
-                                                            type="submit" data-toggle="tooltip" title="Delete"
-                                                            data-placement="bottom"
-                                                            onclick="return confirm('Do you really want to delete this item?')">
-                                                            <span class="btn-icon-wrapper opacity-8">
-                                                                <i class="fa fa-trash fa-w-20"></i>
-                                                            </span>
-                                                        </button>
-                                                    </form>
-                                                </td>
-                                            </tr>
+                                                        </td>
+                                                        <td class=\"text-center\">{$user['email']}</td>
+                                                        <td class=\"text-center\">
+                                                            {$role}
+                                                        </td>
+                                                        <td class=\"text-center\">
+                                                            <a href=\"./user-show.php?id={$userId}&type={$userType}\"
+                                                                class=\"btn btn-hover-shine btn-outline-primary border-0 btn-sm\">
+                                                                Details
+                                                            </a>
+                                                            <a href=\"./user-edit.php?id={$userId}&type={$userType}\" data-toggle=\"tooltip\" title=\"Edit\"
+                                                                data-placement=\"bottom\" class=\"btn btn-outline-warning border-0 btn-sm\">
+                                                                <span class=\"btn-icon-wrapper opacity-8\">
+                                                                    <i class=\"fa fa-edit fa-w-20\"></i>
+                                                                </span>
+                                                            </a>
+                                                            <form class=\"d-inline\" action=\"process/delete_user.php\" method=\"post\">
+                                                                <input type=\"hidden\" name=\"user_id\" value=\"{$userId}\">
+                                                                <input type=\"hidden\" name=\"user_type\" value=\"{$userType}\">
+                                                                <button class=\"btn btn-hover-shine btn-outline-danger border-0 btn-sm\"
+                                                                    type=\"submit\" data-toggle=\"tooltip\" title=\"Delete\"
+                                                                    data-placement=\"bottom\"
+                                                                    onclick=\"return confirm('Do you really want to delete this item?')\">
+                                                                    <span class=\"btn-icon-wrapper opacity-8\">
+                                                                        <i class=\"fa fa-trash fa-w-20\"></i>
+                                                                    </span>
+                                                                </button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>";
+                                                }
+                                            } catch (PDOException $e) {
+                                                echo "Error: " . $e->getMessage();
+                                            }
+                                            ?>
 
                                             
                                         </tbody>
