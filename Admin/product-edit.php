@@ -4,10 +4,7 @@
  checkAdminSession();
  $product_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-
- $product_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-
- // Fetch product data
+ // Lấy dữ liệu sản phẩm
  $stmt = $pdo->prepare("SELECT p.*, b.brand_name, c.category_name FROM products p 
                         LEFT JOIN brands b ON p.brand_id = b.brand_id 
                         LEFT JOIN categories c ON p.category_id = c.category_id 
@@ -16,10 +13,10 @@
  $product = $stmt->fetch(PDO::FETCH_ASSOC);
  
  if (!$product) {
-     die("Product not found");
+     die("Không tìm thấy sản phẩm");
  }
  
- // Fetch variants
+ // Lấy các biến thể
  $stmt = $pdo->prepare("SELECT pv.*, s.size_name, c.color_name FROM product_variants pv 
                         LEFT JOIN sizes s ON pv.size_id = s.size_id 
                         LEFT JOIN colors c ON pv.color_id = c.color_id 
@@ -27,17 +24,120 @@
  $stmt->execute([$product_id]);
  $variants = $stmt->fetchAll(PDO::FETCH_ASSOC);
  
- // Fetch brands, categories, sizes, and colors
+ // Lấy thương hiệu, danh mục, kích thước và màu sắc
  $brands = $pdo->query("SELECT * FROM brands")->fetchAll(PDO::FETCH_ASSOC);
  $categories = $pdo->query("SELECT * FROM categories")->fetchAll(PDO::FETCH_ASSOC);
  $sizes = $pdo->query("SELECT * FROM sizes")->fetchAll(PDO::FETCH_ASSOC);
  $colors = $pdo->query("SELECT * FROM colors")->fetchAll(PDO::FETCH_ASSOC);
  
  if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-     // Process form submission here
-     // Update product and variants
-     // Redirect after successful update
- }
+    try {
+        $pdo->beginTransaction();
+
+        // Cập nhật thông tin sản phẩm
+        $stmt = $pdo->prepare("UPDATE products SET 
+            brand_id = ?, 
+            category_id = ?, 
+            product_name = ?, 
+            description = ?, 
+            price = ?, 
+            sale_price = ?, 
+            is_best_seller = ?, 
+            is_new_arrival = ?, 
+            is_hot_sale = ? 
+            WHERE product_id = ?");
+
+        $stmt->execute([
+            $_POST['brand_id'],
+            $_POST['category_id'],
+            $_POST['product_name'],
+            $_POST['description'],
+            $_POST['price'],
+            $_POST['sale_price'],
+            isset($_POST['is_best_seller']) ? 1 : 0,
+            isset($_POST['is_new_arrival']) ? 1 : 0,
+            isset($_POST['is_hot_sale']) ? 1 : 0,
+            $product_id
+        ]);
+
+        // Xử lý tải lên hình ảnh
+        if (!empty($_FILES['product_image']['name'])) {
+            $upload_dir = $_SERVER['DOCUMENT_ROOT'] . '/malefashion/assets/img/product/';
+            $file_extension = pathinfo($_FILES['product_image']['name'], PATHINFO_EXTENSION);
+            $file_name = uniqid() . '.' . $file_extension;
+            $upload_file = $upload_dir . $file_name;
+
+            if (!file_exists($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+
+            if (move_uploaded_file($_FILES['product_image']['tmp_name'], $upload_file)) {
+                // Xóa hình ảnh cũ nếu tồn tại
+                if (!empty($product['product_image'])) {
+                    $old_image_path = $_SERVER['DOCUMENT_ROOT'] . '/malefashion/' . $product['product_image'];
+                    if (file_exists($old_image_path)) {
+                        unlink($old_image_path);
+                    }
+                }
+
+                $relative_path = 'assets/img/product/' . $file_name;
+                $stmt = $pdo->prepare("UPDATE products SET product_image = ? WHERE product_id = ?");
+                $stmt->execute([$relative_path, $product_id]);
+            } else {
+                throw new Exception("Không thể tải lên hình ảnh. Lỗi: " . error_get_last()['message']);
+            }
+        }
+
+        // Cập nhật các biến thể
+        // Xóa các biến thể cũ
+        $stmt = $pdo->prepare("DELETE FROM product_variants WHERE product_id = ?");
+        $stmt->execute([$product_id]);
+
+        // Tạo một mảng để lưu trữ các biến thể đã xử lý
+        $processed_variants = [];
+
+        foreach ($_POST['variants'] as $variant) {
+            $key = $variant['size_id'] . '-' . $variant['color_id'];
+            
+            if (isset($processed_variants[$key])) {
+                // Nếu biến thể đã tồn tại, cộng thêm số lượng
+                $processed_variants[$key]['stock'] += $variant['stock'];
+            } else {
+                // Nếu biến thể chưa tồn tại, thêm mới vào mảng
+                $processed_variants[$key] = $variant;
+            }
+        }
+
+        // Thêm các biến thể đã xử lý vào cơ sở dữ liệu
+        foreach ($processed_variants as $variant) {
+            $stmt = $pdo->prepare("INSERT INTO product_variants (product_id, size_id, color_id, stock, price) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([$product_id, $variant['size_id'], $variant['color_id'], $variant['stock'], $variant['price']]);
+        }
+
+        $pdo->commit();
+
+        // Làm mới dữ liệu sản phẩm và biến thể
+        $stmt = $pdo->prepare("SELECT p.*, b.brand_name, c.category_name FROM products p 
+                                LEFT JOIN brands b ON p.brand_id = b.brand_id 
+                                LEFT JOIN categories c ON p.category_id = c.category_id 
+                                WHERE p.product_id = ?");
+        $stmt->execute([$product_id]);
+        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        $stmt = $pdo->prepare("SELECT pv.*, s.size_name, c.color_name FROM product_variants pv 
+                                LEFT JOIN sizes s ON pv.size_id = s.size_id 
+                                LEFT JOIN colors c ON pv.color_id = c.color_id 
+                                WHERE pv.product_id = ?");
+        $stmt->execute([$product_id]);
+        $variants = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $success_message = "Category updated successfully.";
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $error_message = "Failed to update category: " . $e->getMessage();
+    }
+}
+
 ?>
  <!doctype html>
 <html lang="en">
@@ -563,6 +663,12 @@
                         <div class="col-md-12">
                         <div class="main-card mb-3 card">
     <div class="card-body">
+        <?php if (isset($error_message) && $error_message): ?>
+            <div class="alert alert-danger"><?php echo $error_message; ?></div>
+        <?php endif; ?>
+        <?php if (isset($success_message) && $success_message): ?>
+            <div class="alert alert-success"><?php echo $success_message; ?></div>
+        <?php endif; ?>
         <h5 class="card-title mb-4">Edit Product</h5>
         <form method="post" enctype="multipart/form-data">
             <div class="row mb-4">
@@ -768,94 +874,6 @@
     });
 </script>
 
-<?php
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    try {
-        $pdo->beginTransaction();
-
-        // Cập nhật thông tin sản phẩm
-        $stmt = $pdo->prepare("UPDATE products SET 
-            brand_id = ?, 
-            category_id = ?, 
-            product_name = ?, 
-            description = ?, 
-            price = ?, 
-            sale_price = ?, 
-            is_best_seller = ?, 
-            is_new_arrival = ?, 
-            is_hot_sale = ? 
-            WHERE product_id = ?");
-
-        $stmt->execute([
-            $_POST['brand_id'],
-            $_POST['category_id'],
-            $_POST['product_name'],
-            $_POST['description'],
-            $_POST['price'],
-            $_POST['sale_price'],
-            isset($_POST['is_best_seller']) ? 1 : 0,
-            isset($_POST['is_new_arrival']) ? 1 : 0,
-            isset($_POST['is_hot_sale']) ? 1 : 0,
-            $product_id
-        ]);
-
-        // Xử lý tải lên hình ảnh
-        if (!empty($_FILES['product_image']['name'])) {
-            $upload_dir = $_SERVER['DOCUMENT_ROOT'] . '/malefashion/assets/img/product/';
-            $file_extension = pathinfo($_FILES['product_image']['name'], PATHINFO_EXTENSION);
-            $file_name = uniqid() . '.' . $file_extension;
-            $upload_file = $upload_dir . $file_name;
-
-            if (!file_exists($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
-            }
-
-            if (move_uploaded_file($_FILES['product_image']['tmp_name'], $upload_file)) {
-                // Xóa hình ảnh cũ nếu tồn tại
-                if (!empty($product['product_image'])) {
-                    $old_image_path = $_SERVER['DOCUMENT_ROOT'] . '/malefashion/' . $product['product_image'];
-                    if (file_exists($old_image_path)) {
-                        unlink($old_image_path);
-                    }
-                }
-
-                $relative_path = 'assets/img/product/' . $file_name;
-                $stmt = $pdo->prepare("UPDATE products SET product_image = ? WHERE product_id = ?");
-                $stmt->execute([$relative_path, $product_id]);
-            } else {
-                throw new Exception("Không thể tải lên hình ảnh. Lỗi: " . error_get_last()['message']);
-            }
-        }
-
-        // Cập nhật các biến thể
-        $stmt = $pdo->prepare("DELETE FROM product_variants WHERE product_id = ?");
-        $stmt->execute([$product_id]);
-
-        $unique_variants = [];
-        foreach ($_POST['variants'] as $variant) {
-            $key = $variant['size_id'] . '-' . $variant['color_id'];
-            if (!isset($unique_variants[$key])) {
-                $unique_variants[$key] = $variant;
-            } else {
-                // Nếu trùng size_id và color_id, cộng thêm vào số lượng
-                $unique_variants[$key]['stock'] += $variant['stock'];
-            }
-        }
-
-        foreach ($unique_variants as $variant) {
-            $stmt = $pdo->prepare("INSERT INTO product_variants (product_id, size_id, color_id, stock, price) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$product_id, $variant['size_id'], $variant['color_id'], $variant['stock'], $variant['price']]);
-        }
-
-        $pdo->commit();
-        echo "<script>alert('Cập nhật sản phẩm thành công!'); window.location.href='product.php';</script>";
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        echo "<script>alert('Lỗi khi cập nhật sản phẩm: " . $e->getMessage() . "');</script>";
-    }
-}
-
-?>
                         </div>
                     </div>
                 </div>
