@@ -2,6 +2,105 @@
  require 'process/config.php';
  require 'process/check_admin_session.php';
  checkAdminSession();
+ // Lấy danh sách brands và categories từ database
+$stmt = $pdo->query("SELECT * FROM brands");
+$brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->query("SELECT * FROM categories");
+$categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->query("SELECT * FROM sizes");
+$sizes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->query("SELECT * FROM colors");
+$colors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    try {
+        $pdo->beginTransaction();
+
+        // Lấy dữ liệu từ form cho bảng products
+        $product_name = $_POST['product_name'];
+        $category_id = $_POST['category_id'];
+        $description = $_POST['description'];
+        $price = $_POST['price'];
+        $brand_id = $_POST['brand_id'];
+        $is_best_seller = isset($_POST['is_best_seller']) ? 1 : 0;
+        $is_new_arrival = isset($_POST['is_new_arrival']) ? 1 : 0;
+        $is_hot_sale = isset($_POST['is_hot_sale']) ? 1 : 0;
+        $sale_price = $_POST['sale_price'] ?: null;
+
+        // Xử lý upload ảnh sản phẩm
+        $product_image = null;
+        $product_image = null;
+if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
+    $target_dir = $_SERVER['DOCUMENT_ROOT'] . "/malefashion/assets/img/product/";
+    
+    // Đảm bảo thư mục tồn tại
+    if (!file_exists($target_dir)) {
+        mkdir($target_dir, 0777, true);
+    }
+    
+    // Tạo tên file duy nhất
+    $file_extension = pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION);
+    $file_name = uniqid() . '.' . $file_extension;
+    $target_file = $target_dir . $file_name;
+    
+    // Di chuyển file đã upload
+    if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) {
+        // Đường dẫn để lưu vào database (đường dẫn tương đối)
+        $product_image = "assets/img/product/" . $file_name;
+    } else {
+        $error = "Sorry, there was an error uploading your file.";
+    }
+}
+
+        // Thêm sản phẩm vào bảng products
+        $sql = "INSERT INTO products (product_name, category_id, description, price, product_image, is_best_seller, is_new_arrival, is_hot_sale, sale_price, brand_id) 
+                VALUES (:product_name, :category_id, :description, :price, :product_image, :is_best_seller, :is_new_arrival, :is_hot_sale, :sale_price, :brand_id)";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':product_name' => $product_name,
+            ':category_id' => $category_id,
+            ':description' => $description,
+            ':price' => $price,
+            ':product_image' => $product_image,
+            ':is_best_seller' => $is_best_seller,
+            ':is_new_arrival' => $is_new_arrival,
+            ':is_hot_sale' => $is_hot_sale,
+            ':sale_price' => $sale_price,
+            ':brand_id' => $brand_id
+        ]);
+
+        $product_id = $pdo->lastInsertId();
+
+        // Xử lý variants
+        $size_ids = $_POST['size_id'];
+        $color_ids = $_POST['color_id'];
+        $stocks = $_POST['stock'];
+        $variant_prices = $_POST['variant_price'];
+
+        $stmt = $pdo->prepare("INSERT INTO product_variants (product_id, size_id, color_id, stock, price) 
+                               VALUES (:product_id, :size_id, :color_id, :stock, :price)");
+
+        for ($i = 0; $i < count($size_ids); $i++) {
+            $stmt->execute([
+                ':product_id' => $product_id,
+                ':size_id' => $size_ids[$i],
+                ':color_id' => $color_ids[$i],
+                ':stock' => $stocks[$i],
+                ':price' => $variant_prices[$i]
+            ]);
+        }
+
+        $pdo->commit();
+        $success = "Product and variants added successfully!";
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        $error = "Error: " . $e->getMessage();
+    }
+}
 ?>
  
  <!doctype html>
@@ -29,960 +128,7 @@
 
 <body>
     <div class="app-container app-theme-white body-tabs-shadow fixed-header fixed-sidebar">
-        <div class="app-header header-shadow">
-            <div class="app-header__logo">
-                <div class="logo-src"></div>
-                <div class="header__pane ml-auto">
-                    <div>
-                        <button type="button" class="hamburger close-sidebar-btn hamburger--elastic"
-                            data-class="closed-sidebar">
-                            <span class="hamburger-box">
-                                <span class="hamburger-inner"></span>
-                            </span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="app-header__mobile-menu">
-                <div>
-                    <button type="button" class="hamburger hamburger--elastic mobile-toggle-nav">
-                        <span class="hamburger-box">
-                            <span class="hamburger-inner"></span>
-                        </span>
-                    </button>
-                </div>
-            </div>
-            <div class="app-header__menu">
-                <span>
-                    <button type="button"
-                        class="btn-icon btn-icon-only btn btn-primary btn-sm mobile-toggle-header-nav">
-                        <span class="btn-icon-wrapper">
-                            <i class="fa fa-ellipsis-v fa-w-6"></i>
-                        </span>
-                    </button>
-                </span>
-            </div>
-            <div class="app-header__content">
-                <div class="app-header-left">
-                    <div class="search-wrapper">
-                        <div class="input-holder">
-                            <input type="text" class="search-input" placeholder="Type to search">
-                            <button class="search-icon"><span></span></button>
-                        </div>
-                        <button class="close"></button>
-                    </div>
-                    <ul class="header-megamenu nav">
-                        <li class="nav-item">
-                            <a href="javascript:void(0);" data-placement="bottom" rel="popover-focus" data-offset="300"
-                                data-toggle="popover-custom" class="nav-link">
-                                <i class="nav-link-icon pe-7s-gift"> </i> Mega Menu
-                                <i class="fa fa-angle-down ml-2 opacity-5"></i>
-                            </a>
-                            <div class="rm-max-width">
-                                <div class="d-none popover-custom-content">
-                                    <div class="dropdown-mega-menu">
-                                        <div class="grid-menu grid-menu-3col">
-                                            <div class="no-gutters row">
-                                                <div class="col-sm-6 col-xl-4">
-                                                    <ul class="nav flex-column">
-                                                        <li class="nav-item-header nav-item"> Overview</li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">
-                                                                <i class="nav-link-icon lnr-inbox"></i>
-                                                                <span> Contacts</span>
-                                                            </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">
-                                                                <i class="nav-link-icon lnr-book"></i>
-                                                                <span> Incidents</span>
-                                                                <div class="ml-auto badge badge-pill badge-danger">5
-                                                                </div>
-                                                            </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">
-                                                                <i class="nav-link-icon lnr-picture"></i>
-                                                                <span> Companies</span>
-                                                            </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a disabled="" href="javascript:void(0);"
-                                                                class="nav-link disabled">
-                                                                <i class="nav-link-icon lnr-file-empty"></i>
-                                                                <span> Dashboards</span>
-                                                            </a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                                <div class="col-sm-6 col-xl-4">
-                                                    <ul class="nav flex-column">
-                                                        <li class="nav-item-header nav-item"> Favourites</li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link"> Reports
-                                                                Conversions </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link"> Quick Start
-                                                                <div class="ml-auto badge badge-success">New</div>
-                                                            </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Users &amp;
-                                                                Groups</a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);"
-                                                                class="nav-link">Proprieties</a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                                <div class="col-sm-6 col-xl-4">
-                                                    <ul class="nav flex-column">
-                                                        <li class="nav-item-header nav-item">Sales &amp; Marketing</li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Queues </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Resource
-                                                                Groups </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Goal Metrics
-                                                                <div class="ml-auto badge badge-warning">3</div>
-                                                            </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Campaigns</a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="btn-group nav-item">
-                            <a class="nav-link" data-toggle="dropdown" aria-expanded="false">
-                                <span class="badge badge-pill badge-danger ml-0 mr-2">4</span> Settings
-                                <i class="fa fa-angle-down ml-2 opacity-5"></i>
-                            </a>
-                            <div tabindex="-1" role="menu" aria-hidden="true" class="rm-pointers dropdown-menu">
-                                <div class="dropdown-menu-header">
-                                    <div class="dropdown-menu-header-inner bg-secondary">
-                                        <div class="menu-header-image opacity-5"
-                                            style="background-image: url('assets/images/dropdown-header/abstract2.jpg');">
-                                        </div>
-                                        <div class="menu-header-content">
-                                            <h5 class="menu-header-title">Overview</h5>
-                                            <h6 class="menu-header-subtitle">Dropdown menus for everyone</h6>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="scroll-area-xs">
-                                    <div class="scrollbar-container">
-                                        <h6 tabindex="-1" class="dropdown-header">Key Figures</h6>
-                                        <button type="button" tabindex="0" class="dropdown-item">Service
-                                            Calendar</button>
-                                        <button type="button" tabindex="0" class="dropdown-item">Knowledge Base</button>
-                                        <button type="button" tabindex="0" class="dropdown-item">Accounts</button>
-                                        <div tabindex="-1" class="dropdown-divider"></div>
-                                        <button type="button" tabindex="0" class="dropdown-item">Products</button>
-                                        <button type="button" tabindex="0" class="dropdown-item">Rollup Queries</button>
-                                    </div>
-                                </div>
-                                <ul class="nav flex-column">
-                                    <li class="nav-item-divider nav-item"></li>
-                                    <li class="nav-item-btn nav-item">
-                                        <button class="btn-wide btn-shadow btn btn-danger btn-sm">Cancel</button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li class="dropdown nav-item">
-                            <a aria-haspopup="true" data-toggle="dropdown" class="nav-link" aria-expanded="false">
-                                <i class="nav-link-icon pe-7s-settings"></i> Projects
-                                <i class="fa fa-angle-down ml-2 opacity-5"></i>
-                            </a>
-                            <div tabindex="-1" role="menu" aria-hidden="true"
-                                class="dropdown-menu-rounded dropdown-menu-lg rm-pointers dropdown-menu">
-                                <div class="dropdown-menu-header">
-                                    <div class="dropdown-menu-header-inner bg-success">
-                                        <div class="menu-header-image opacity-1"
-                                            style="background-image: url('assets/images/dropdown-header/abstract3.jpg');">
-                                        </div>
-                                        <div class="menu-header-content text-left">
-                                            <h5 class="menu-header-title">Overview</h5>
-                                            <h6 class="menu-header-subtitle">Unlimited options</h6>
-                                            <div class="menu-header-btn-pane">
-                                                <button class="mr-2 btn btn-dark btn-sm">Settings</button>
-                                                <button class="btn-icon btn-icon-only btn btn-warning btn-sm">
-                                                    <i class="pe-7s-config btn-icon-wrapper"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button type="button" tabindex="0" class="dropdown-item">
-                                    <i class="dropdown-icon lnr-file-empty"></i>Graphic Design
-                                </button>
-                                <button type="button" tabindex="0" class="dropdown-item">
-                                    <i class="dropdown-icon lnr-file-empty"> </i>App Development
-                                </button>
-                                <button type="button" tabindex="0" class="dropdown-item">
-                                    <i class="dropdown-icon lnr-file-empty"> </i>Icon Design
-                                </button>
-                                <div tabindex="-1" class="dropdown-divider"></div>
-                                <button type="button" tabindex="0" class="dropdown-item">
-                                    <i class="dropdown-icon lnr-file-empty"></i>Miscellaneous
-                                </button>
-                                <button type="button" tabindex="0" class="dropdown-item">
-                                    <i class="dropdown-icon lnr-file-empty"></i>Frontend Dev
-                                </button>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-                <div class="app-header-right">
-                    <div class="header-dots">
-                        <div class="dropdown">
-                            <button type="button" aria-haspopup="true" aria-expanded="false" data-toggle="dropdown"
-                                class="p-0 mr-2 btn btn-link">
-                                <span class="icon-wrapper icon-wrapper-alt rounded-circle">
-                                    <span class="icon-wrapper-bg bg-primary"></span>
-                                    <i class="icon text-primary ion-android-apps"></i>
-                                </span>
-                            </button>
-                            <div tabindex="-1" role="menu" aria-hidden="true"
-                                class="dropdown-menu-xl rm-pointers dropdown-menu dropdown-menu-right">
-                                <div class="dropdown-menu-header">
-                                    <div class="dropdown-menu-header-inner bg-plum-plate">
-                                        <div class="menu-header-image"
-                                            style="background-image: url('assets/images/dropdown-header/abstract4.jpg');">
-                                        </div>
-                                        <div class="menu-header-content text-white">
-                                            <h5 class="menu-header-title">Grid Dashboard</h5>
-                                            <h6 class="menu-header-subtitle">Easy grid navigation inside dropdowns</h6>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="grid-menu grid-menu-xl grid-menu-3col">
-                                    <div class="no-gutters row">
-                                        <div class="col-sm-6 col-xl-4">
-                                            <button
-                                                class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
-                                                <i
-                                                    class="pe-7s-world icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3"></i>
-                                                Automation
-                                            </button>
-                                        </div>
-                                        <div class="col-sm-6 col-xl-4">
-                                            <button
-                                                class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
-                                                <i
-                                                    class="pe-7s-piggy icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3">
-                                                </i> Reports
-                                            </button>
-                                        </div>
-                                        <div class="col-sm-6 col-xl-4">
-                                            <button
-                                                class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
-                                                <i
-                                                    class="pe-7s-config icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3">
-                                                </i> Settings
-                                            </button>
-                                        </div>
-                                        <div class="col-sm-6 col-xl-4">
-                                            <button
-                                                class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
-                                                <i
-                                                    class="pe-7s-browser icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3">
-                                                </i> Content
-                                            </button>
-                                        </div>
-                                        <div class="col-sm-6 col-xl-4">
-                                            <button
-                                                class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
-                                                <i
-                                                    class="pe-7s-hourglass icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3"></i>
-                                                Activity
-                                            </button>
-                                        </div>
-                                        <div class="col-sm-6 col-xl-4">
-                                            <button
-                                                class="btn-icon-vertical btn-square btn-transition btn btn-outline-link">
-                                                <i
-                                                    class="pe-7s-world icon-gradient bg-night-fade btn-icon-wrapper btn-icon-lg mb-3">
-                                                </i> Contacts
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <ul class="nav flex-column">
-                                    <li class="nav-item-divider nav-item"></li>
-                                    <li class="nav-item-btn text-center nav-item">
-                                        <button class="btn-shadow btn btn-primary btn-sm">Follow-ups</button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="dropdown">
-                            <button type="button" aria-haspopup="true" aria-expanded="false" data-toggle="dropdown"
-                                class="p-0 mr-2 btn btn-link">
-                                <span class="icon-wrapper icon-wrapper-alt rounded-circle">
-                                    <span class="icon-wrapper-bg bg-danger"></span>
-                                    <i class="icon text-danger icon-anim-pulse ion-android-notifications"></i>
-                                    <span class="badge badge-dot badge-dot-sm badge-danger">Notifications</span>
-                                </span>
-                            </button>
-                            <div tabindex="-1" role="menu" aria-hidden="true"
-                                class="dropdown-menu-xl rm-pointers dropdown-menu dropdown-menu-right">
-                                <div class="dropdown-menu-header mb-0">
-                                    <div class="dropdown-menu-header-inner bg-deep-blue">
-                                        <div class="menu-header-image opacity-1"
-                                            style="background-image: url('assets/images/dropdown-header/city3.jpg');">
-                                        </div>
-                                        <div class="menu-header-content text-dark">
-                                            <h5 class="menu-header-title">Notifications</h5>
-                                            <h6 class="menu-header-subtitle">You have <b>21</b> unread messages</h6>
-                                        </div>
-                                    </div>
-                                </div>
-                                <ul
-                                    class="tabs-animated-shadow tabs-animated nav nav-justified tabs-shadow-bordered p-3">
-                                    <li class="nav-item">
-                                        <a role="tab" class="nav-link active" data-toggle="tab"
-                                            href="#tab-messages-header">
-                                            <span>Messages</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a role="tab" class="nav-link" data-toggle="tab" href="#tab-events-header">
-                                            <span>Events</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a role="tab" class="nav-link" data-toggle="tab" href="#tab-errors-header">
-                                            <span>System Errors</span>
-                                        </a>
-                                    </li>
-                                </ul>
-                                <div class="tab-content">
-                                    <div class="tab-pane active" id="tab-messages-header" role="tabpanel">
-                                        <div class="scroll-area-sm">
-                                            <div class="scrollbar-container">
-                                                <div class="p-3">
-                                                    <div class="notifications-box">
-                                                        <div
-                                                            class="vertical-time-simple vertical-without-time vertical-timeline vertical-timeline--one-column">
-                                                            <div
-                                                                class="vertical-timeline-item dot-danger vertical-timeline-element">
-                                                                <div><span
-                                                                        class="vertical-timeline-element-icon bounce-in"></span>
-                                                                    <div
-                                                                        class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">All Hands Meeting
-                                                                        </h4>
-                                                                        <span
-                                                                            class="vertical-timeline-element-date"></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div
-                                                                class="vertical-timeline-item dot-warning vertical-timeline-element">
-                                                                <div>
-                                                                    <span
-                                                                        class="vertical-timeline-element-icon bounce-in"></span>
-                                                                    <div
-                                                                        class="vertical-timeline-element-content bounce-in">
-                                                                        <p>Yet another one, at <span
-                                                                                class="text-success">15:00 PM</span></p>
-                                                                        <span
-                                                                            class="vertical-timeline-element-date"></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div
-                                                                class="vertical-timeline-item dot-success vertical-timeline-element">
-                                                                <div>
-                                                                    <span
-                                                                        class="vertical-timeline-element-icon bounce-in"></span>
-                                                                    <div
-                                                                        class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">Build the production
-                                                                            release
-                                                                            <span
-                                                                                class="badge badge-danger ml-2">NEW</span>
-                                                                        </h4>
-                                                                        <span
-                                                                            class="vertical-timeline-element-date"></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div
-                                                                class="vertical-timeline-item dot-primary vertical-timeline-element">
-                                                                <div>
-                                                                    <span
-                                                                        class="vertical-timeline-element-icon bounce-in"></span>
-                                                                    <div
-                                                                        class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">Something not
-                                                                            important
-                                                                            <div
-                                                                                class="avatar-wrapper mt-2 avatar-wrapper-overlap">
-                                                                                <div
-                                                                                    class="avatar-icon-wrapper avatar-icon-sm">
-                                                                                    <div class="avatar-icon">
-                                                                                        <img src="assets/images/avatars/1.jpg"
-                                                                                            alt="">
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div
-                                                                                    class="avatar-icon-wrapper avatar-icon-sm">
-                                                                                    <div class="avatar-icon">
-                                                                                        <img src="assets/images/avatars/2.jpg"
-                                                                                            alt="">
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div
-                                                                                    class="avatar-icon-wrapper avatar-icon-sm">
-                                                                                    <div class="avatar-icon">
-                                                                                        <img src="assets/images/avatars/3.jpg"
-                                                                                            alt="">
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div
-                                                                                    class="avatar-icon-wrapper avatar-icon-sm">
-                                                                                    <div class="avatar-icon">
-                                                                                        <img src="assets/images/avatars/4.jpg"
-                                                                                            alt="">
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div
-                                                                                    class="avatar-icon-wrapper avatar-icon-sm">
-                                                                                    <div class="avatar-icon">
-                                                                                        <img src="assets/images/avatars/5.jpg"
-                                                                                            alt="">
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div
-                                                                                    class="avatar-icon-wrapper avatar-icon-sm">
-                                                                                    <div class="avatar-icon">
-                                                                                        <img src="assets/images/avatars/9.jpg"
-                                                                                            alt="">
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div
-                                                                                    class="avatar-icon-wrapper avatar-icon-sm">
-                                                                                    <div class="avatar-icon">
-                                                                                        <img src="assets/images/avatars/7.jpg"
-                                                                                            alt="">
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div
-                                                                                    class="avatar-icon-wrapper avatar-icon-sm">
-                                                                                    <div class="avatar-icon">
-                                                                                        <img src="assets/images/avatars/8.jpg"
-                                                                                            alt="">
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div
-                                                                                    class="avatar-icon-wrapper avatar-icon-sm avatar-icon-add">
-                                                                                    <div class="avatar-icon"><i>+</i>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </h4>
-                                                                        <span
-                                                                            class="vertical-timeline-element-date"></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div
-                                                                class="vertical-timeline-item dot-info vertical-timeline-element">
-                                                                <div>
-                                                                    <span
-                                                                        class="vertical-timeline-element-icon bounce-in"></span>
-                                                                    <div
-                                                                        class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">This dot has an info
-                                                                            state</h4>
-                                                                        <span
-                                                                            class="vertical-timeline-element-date"></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div
-                                                                class="vertical-timeline-item dot-danger vertical-timeline-element">
-                                                                <div>
-                                                                    <span
-                                                                        class="vertical-timeline-element-icon bounce-in"></span>
-                                                                    <div
-                                                                        class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">All Hands Meeting
-                                                                        </h4>
-                                                                        <span
-                                                                            class="vertical-timeline-element-date"></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div
-                                                                class="vertical-timeline-item dot-warning vertical-timeline-element">
-                                                                <div>
-                                                                    <span
-                                                                        class="vertical-timeline-element-icon bounce-in"></span>
-                                                                    <div
-                                                                        class="vertical-timeline-element-content bounce-in">
-                                                                        <p>Yet another one, at <span
-                                                                                class="text-success">15:00 PM</span>
-                                                                        </p><span
-                                                                            class="vertical-timeline-element-date"></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div
-                                                                class="vertical-timeline-item dot-success vertical-timeline-element">
-                                                                <div><span
-                                                                        class="vertical-timeline-element-icon bounce-in"></span>
-                                                                    <div
-                                                                        class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">Build the production
-                                                                            release
-                                                                            <span
-                                                                                class="badge badge-danger ml-2">NEW</span>
-                                                                        </h4>
-                                                                        <span
-                                                                            class="vertical-timeline-element-date"></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div
-                                                                class="vertical-timeline-item dot-dark vertical-timeline-element">
-                                                                <div><span
-                                                                        class="vertical-timeline-element-icon bounce-in"></span>
-                                                                    <div
-                                                                        class="vertical-timeline-element-content bounce-in">
-                                                                        <h4 class="timeline-title">This dot has a dark
-                                                                            state</h4>
-                                                                        <span
-                                                                            class="vertical-timeline-element-date"></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="tab-pane" id="tab-events-header" role="tabpanel">
-                                        <div class="scroll-area-sm">
-                                            <div class="scrollbar-container">
-                                                <div class="p-3">
-                                                    <div
-                                                        class="vertical-without-time vertical-timeline vertical-timeline--animate vertical-timeline--one-column">
-                                                        <div class="vertical-timeline-item vertical-timeline-element">
-                                                            <div>
-                                                                <span class="vertical-timeline-element-icon bounce-in">
-                                                                    <i
-                                                                        class="badge badge-dot badge-dot-xl badge-success">
-                                                                    </i>
-                                                                </span>
-                                                                <div
-                                                                    class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title">All Hands Meeting</h4>
-                                                                    <p>Lorem ipsum dolor sic amet, today at
-                                                                        <a href="javascript:void(0);">12:00 PM</a>
-                                                                    </p>
-                                                                    <span class="vertical-timeline-element-date"></span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="vertical-timeline-item vertical-timeline-element">
-                                                            <div>
-                                                                <span class="vertical-timeline-element-icon bounce-in">
-                                                                    <i
-                                                                        class="badge badge-dot badge-dot-xl badge-warning">
-                                                                    </i>
-                                                                </span>
-                                                                <div
-                                                                    class="vertical-timeline-element-content bounce-in">
-                                                                    <p>Another meeting today, at <b
-                                                                            class="text-danger">12:00 PM</b></p>
-                                                                    <p>Yet another one, at <span
-                                                                            class="text-success">15:00 PM</span></p>
-                                                                    <span class="vertical-timeline-element-date"></span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="vertical-timeline-item vertical-timeline-element">
-                                                            <div>
-                                                                <span class="vertical-timeline-element-icon bounce-in">
-                                                                    <i
-                                                                        class="badge badge-dot badge-dot-xl badge-danger">
-                                                                    </i>
-                                                                </span>
-                                                                <div
-                                                                    class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title">Build the production
-                                                                        release</h4>
-                                                                    <p>Lorem ipsum dolor sit amit,consectetur eiusmdd
-                                                                        tempor incididunt ut
-                                                                        labore et dolore magna elit enim at minim veniam
-                                                                        quis nostrud
-                                                                    </p>
-                                                                    <span class="vertical-timeline-element-date"></span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="vertical-timeline-item vertical-timeline-element">
-                                                            <div>
-                                                                <span class="vertical-timeline-element-icon bounce-in">
-                                                                    <i
-                                                                        class="badge badge-dot badge-dot-xl badge-primary">
-                                                                    </i>
-                                                                </span>
-                                                                <div
-                                                                    class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title text-success">Something
-                                                                        not important</h4>
-                                                                    <p>Lorem ipsum dolor sit amit,consectetur elit enim
-                                                                        at minim veniam quis nostrud</p>
-                                                                    <span class="vertical-timeline-element-date"></span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="vertical-timeline-item vertical-timeline-element">
-                                                            <div>
-                                                                <span class="vertical-timeline-element-icon bounce-in">
-                                                                    <i
-                                                                        class="badge badge-dot badge-dot-xl badge-success">
-                                                                    </i>
-                                                                </span>
-                                                                <div
-                                                                    class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title">All Hands Meeting</h4>
-                                                                    <p>Lorem ipsum dolor sic amet, today at
-                                                                        <a href="javascript:void(0);">12:00 PM</a>
-                                                                    </p>
-                                                                    <span class="vertical-timeline-element-date"></span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="vertical-timeline-item vertical-timeline-element">
-                                                            <div>
-                                                                <span class="vertical-timeline-element-icon bounce-in">
-                                                                    <i
-                                                                        class="badge badge-dot badge-dot-xl badge-warning">
-                                                                    </i>
-                                                                </span>
-                                                                <div
-                                                                    class="vertical-timeline-element-content bounce-in">
-                                                                    <p>Another meeting today, at <b
-                                                                            class="text-danger">12:00 PM</b></p>
-                                                                    <p>Yet another one, at <span
-                                                                            class="text-success">15:00 PM</span></p>
-                                                                    <span class="vertical-timeline-element-date"></span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="vertical-timeline-item vertical-timeline-element">
-                                                            <div>
-                                                                <span class="vertical-timeline-element-icon bounce-in">
-                                                                    <i
-                                                                        class="badge badge-dot badge-dot-xl badge-danger">
-                                                                    </i>
-                                                                </span>
-                                                                <div
-                                                                    class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title">Build the production
-                                                                        release</h4>
-                                                                    <p>Lorem ipsum dolor sit amit,consectetur eiusmdd
-                                                                        tempor incididunt ut
-                                                                        labore et dolore magna elit enim at minim veniam
-                                                                        quis nostrud
-                                                                    </p>
-                                                                    <span class="vertical-timeline-element-date"></span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="vertical-timeline-item vertical-timeline-element">
-                                                            <div>
-                                                                <span class="vertical-timeline-element-icon bounce-in">
-                                                                    <i
-                                                                        class="badge badge-dot badge-dot-xl badge-primary">
-                                                                    </i>
-                                                                </span>
-                                                                <div
-                                                                    class="vertical-timeline-element-content bounce-in">
-                                                                    <h4 class="timeline-title text-success">Something
-                                                                        not important</h4>
-                                                                    <p>Lorem ipsum dolor sit amit,consectetur elit enim
-                                                                        at minim veniam quis nostrud</p>
-                                                                    <span class="vertical-timeline-element-date"></span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="tab-pane" id="tab-errors-header" role="tabpanel">
-                                        <div class="scroll-area-sm">
-                                            <div class="scrollbar-container">
-                                                <div class="no-results pt-3 pb-0">
-                                                    <div class="swal2-icon swal2-success swal2-animate-success-icon">
-                                                        <div class="swal2-success-circular-line-left"
-                                                            style="background-color: rgb(255, 255, 255);"></div>
-                                                        <span class="swal2-success-line-tip"></span>
-                                                        <span class="swal2-success-line-long"></span>
-                                                        <div class="swal2-success-ring"></div>
-                                                        <div class="swal2-success-fix"
-                                                            style="background-color: rgb(255, 255, 255);"></div>
-                                                        <div class="swal2-success-circular-line-right"
-                                                            style="background-color: rgb(255, 255, 255);"></div>
-                                                    </div>
-                                                    <div class="results-subtitle">All caught up!</div>
-                                                    <div class="results-title">There are no system errors!</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <ul class="nav flex-column">
-                                    <li class="nav-item-divider nav-item"></li>
-                                    <li class="nav-item-btn text-center nav-item">
-                                        <button class="btn-shadow btn-wide btn-pill btn btn-focus btn-sm">View Latest
-                                            Changes</button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="dropdown">
-                            <button type="button" data-toggle="dropdown" class="p-0 mr-2 btn btn-link">
-                                <span class="icon-wrapper icon-wrapper-alt rounded-circle">
-                                    <span class="icon-wrapper-bg bg-focus"></span>
-                                    <span class="language-icon opacity-8 flag large DE"></span>
-                                </span>
-                            </button>
-                            <div tabindex="-1" role="menu" aria-hidden="true"
-                                class="rm-pointers dropdown-menu dropdown-menu-right">
-                                <div class="dropdown-menu-header">
-                                    <div class="dropdown-menu-header-inner pt-4 pb-4 bg-focus">
-                                        <div class="menu-header-image opacity-05"
-                                            style="background-image: url('assets/images/dropdown-header/city2.jpg');">
-                                        </div>
-                                        <div class="menu-header-content text-center text-white">
-                                            <h6 class="menu-header-subtitle mt-0"> Choose Language</h6>
-                                        </div>
-                                    </div>
-                                </div>
-                                <h6 tabindex="-1" class="dropdown-header"> Popular Languages</h6>
-                                <button type="button" tabindex="0" class="dropdown-item">
-                                    <span class="mr-3 opacity-8 flag large US"></span> USA
-                                </button>
-                                <button type="button" tabindex="0" class="dropdown-item">
-                                    <span class="mr-3 opacity-8 flag large CH"></span> Switzerland
-                                </button>
-                                <button type="button" tabindex="0" class="dropdown-item">
-                                    <span class="mr-3 opacity-8 flag large FR"></span> France
-                                </button>
-                                <button type="button" tabindex="0" class="dropdown-item">
-                                    <span class="mr-3 opacity-8 flag large ES"></span>Spain
-                                </button>
-                                <div tabindex="-1" class="dropdown-divider"></div>
-                                <h6 tabindex="-1" class="dropdown-header">Others</h6>
-                                <button type="button" tabindex="0" class="dropdown-item active">
-                                    <span class="mr-3 opacity-8 flag large DE"></span> Germany
-                                </button>
-                                <button type="button" tabindex="0" class="dropdown-item">
-                                    <span class="mr-3 opacity-8 flag large IT"></span> Italy
-                                </button>
-                            </div>
-                        </div>
-                        <div class="dropdown">
-                            <button type="button" aria-haspopup="true" data-toggle="dropdown" aria-expanded="false"
-                                class="p-0 btn btn-link dd-chart-btn">
-                                <span class="icon-wrapper icon-wrapper-alt rounded-circle">
-                                    <span class="icon-wrapper-bg bg-success"></span>
-                                    <i class="icon text-success ion-ios-analytics"></i>
-                                </span>
-                            </button>
-                            <div tabindex="-1" role="menu" aria-hidden="true"
-                                class="dropdown-menu-xl rm-pointers dropdown-menu dropdown-menu-right">
-                                <div class="dropdown-menu-header">
-                                    <div class="dropdown-menu-header-inner bg-premium-dark">
-                                        <div class="menu-header-image"
-                                            style="background-image: url('assets/images/dropdown-header/abstract4.jpg');">
-                                        </div>
-                                        <div class="menu-header-content text-white">
-                                            <h5 class="menu-header-title">Users Online</h5>
-                                            <h6 class="menu-header-subtitle">Recent Account Activity Overview</h6>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="widget-chart">
-                                    <div class="widget-chart-content">
-                                        <div class="icon-wrapper rounded-circle">
-                                            <div class="icon-wrapper-bg opacity-9 bg-focus"></div>
-                                            <i class="lnr-users text-white"></i>
-                                        </div>
-                                        <div class="widget-numbers">
-                                            <span>344k</span>
-                                        </div>
-                                        <div class="widget-subheading pt-2">
-                                            Profile views since last login
-                                        </div>
-                                        <div class="widget-description text-danger">
-                                            <span class="pr-1"><span>176%</span></span>
-                                            <i class="fa fa-arrow-left"></i>
-                                        </div>
-                                    </div>
-                                    <div class="widget-chart-wrapper">
-                                        <div id="dashboard-sparkline-carousel-3-pop"></div>
-                                    </div>
-                                </div>
-                                <ul class="nav flex-column">
-                                    <li class="nav-item-divider mt-0 nav-item"></li>
-                                    <li class="nav-item-btn text-center nav-item">
-                                        <button class="btn-shine btn-wide btn-pill btn btn-warning btn-sm">
-                                            <i class="fa fa-cog fa-spin mr-2"></i>View Details
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="header-btn-lg pr-0">
-                        <div class="widget-content p-0">
-                            <div class="widget-content-wrapper">
-                                <div class="widget-content-left">
-                                    <div class="btn-group">
-                                        <a data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
-                                            class="p-0 btn">
-                                            <img width="42" class="rounded-circle" src="assets/images/avatars/1.jpg"
-                                                alt="">
-                                            <i class="fa fa-angle-down ml-2 opacity-8"></i>
-                                        </a>
-                                        <div tabindex="-1" role="menu" aria-hidden="true"
-                                            class="rm-pointers dropdown-menu-lg dropdown-menu dropdown-menu-right">
-                                            <div class="dropdown-menu-header">
-                                                <div class="dropdown-menu-header-inner bg-info">
-                                                    <div class="menu-header-image opacity-2"
-                                                        style="background-image: url('assets/images/dropdown-header/city3.jpg');">
-                                                    </div>
-                                                    <div class="menu-header-content text-left">
-                                                        <div class="widget-content p-0">
-                                                            <div class="widget-content-wrapper">
-                                                                <div class="widget-content-left mr-3">
-                                                                    <img width="42" class="rounded-circle"
-                                                                        src="assets/images/avatars/1.jpg" alt="">
-                                                                </div>
-                                                                <div class="widget-content-left">
-                                                                    <div class="widget-heading">Alina Mcloughlin</div>
-                                                                    <div class="widget-subheading opacity-8">A short
-                                                                        profile description</div>
-                                                                </div>
-                                                                <div class="widget-content-right mr-2">
-                                                                    <button
-                                                                        class="btn-pill btn-shadow btn-shine btn btn-focus">Logout</button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="scroll-area-xs" style="height: 150px;">
-                                                <div class="scrollbar-container ps">
-                                                    <ul class="nav flex-column">
-                                                        <li class="nav-item-header nav-item">Activity</li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Chat
-                                                                <div class="ml-auto badge badge-pill badge-info">8</div>
-                                                            </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Recover
-                                                                Password</a>
-                                                        </li>
-                                                        <li class="nav-item-header nav-item">My Account
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Settings
-                                                                <div class="ml-auto badge badge-success">New</div>
-                                                            </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Messages
-                                                                <div class="ml-auto badge badge-warning">512</div>
-                                                            </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href="javascript:void(0);" class="nav-link">Logs</a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                            <ul class="nav flex-column">
-                                                <li class="nav-item-divider mb-0 nav-item"></li>
-                                            </ul>
-                                            <div class="grid-menu grid-menu-2col">
-                                                <div class="no-gutters row">
-                                                    <div class="col-sm-6">
-                                                        <button
-                                                            class="btn-icon-vertical btn-transition btn-transition-alt pt-2 pb-2 btn btn-outline-warning">
-                                                            <i
-                                                                class="pe-7s-chat icon-gradient bg-amy-crisp btn-icon-wrapper mb-2"></i>
-                                                            Message Inbox
-                                                        </button>
-                                                    </div>
-                                                    <div class="col-sm-6">
-                                                        <button
-                                                            class="btn-icon-vertical btn-transition btn-transition-alt pt-2 pb-2 btn btn-outline-danger">
-                                                            <i
-                                                                class="pe-7s-ticket icon-gradient bg-love-kiss btn-icon-wrapper mb-2"></i>
-                                                            <b>Support Tickets</b>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <ul class="nav flex-column">
-                                                <li class="nav-item-divider nav-item">
-                                                </li>
-                                                <li class="nav-item-btn text-center nav-item">
-                                                    <button class="btn-wide btn btn-primary btn-sm"> Open Messages
-                                                    </button>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="widget-content-left  ml-3 header-user-info">
-                                    <div class="widget-heading"> Alina Mclourd </div>
-                                    <div class="widget-subheading"> VP People Manager </div>
-                                </div>
-                                <div class="widget-content-right header-user-info ml-3">
-                                    <button type="button"
-                                        class="btn-shadow p-1 btn btn-primary btn-sm show-toastr-example">
-                                        <i class="fa text-white fa-calendar pr-1 pl-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="header-btn-lg">
-                        <button type="button" class="hamburger hamburger--elastic open-right-drawer">
-                            <span class="hamburger-box">
-                                <span class="hamburger-inner"></span>
-                            </span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <?php include 'includes/app-header.php'; ?>
 
         <div class="ui-theme-settings">
             <button type="button" id="TooltipDemo" class="btn-open-options btn btn-warning">
@@ -1479,149 +625,113 @@
 
                     <div class="row">
                         <div class="col-md-12">
-                            <div class="main-card mb-3 card">
-                                <div class="card-body">
-                                    <form method="post" enctype="multipart/form-data"></form>
-                                        <div class="position-relative row form-group">
-                                            <label for="brand_id"
-                                                class="col-md-3 text-md-right col-form-label">Brand</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <select required name="brand_id" id="brand_id" class="form-control">
-                                                    <option value="">-- Brand --</option>
-                                                    <option value=0>
-                                                        Calvin Klein
-                                                    </option>
-                                                    <option value=1>
-                                                        Diesel
-                                                    </option>
-                                                    <option value=2>
-                                                        Polo
-                                                    </option>
-                                                </select>
-                                            </div>
-                                        </div>
+                        <div class="main-card mb-3 card">
+    <div class="card-body">
+        <h5 class="card-title">Create New Product</h5>
+        <?php if (isset($error)): ?>
+            <div class="alert alert-danger"><?php echo $error; ?></div>
+        <?php endif; ?>
+        <?php if (isset($success)): ?>
+            <div class="alert alert-success"><?php echo $success; ?></div>
+        <?php endif; ?>
 
-                                        <div class="position-relative row form-group">
-                                            <label for="product_category_id"
-                                                class="col-md-3 text-md-right col-form-label">Category</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <select required name="product_category_id" id="product_category_id" class="form-control">
-                                                    <option value="">-- Category --</option>
-                                                    <option value=0>
-                                                        Men
-                                                    </option>
-                                                    <option value=1>
-                                                        Women
-                                                    </option>
-                                                    <option value=2>
-                                                        Kid
-                                                    </option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    
-                                        <div class="position-relative row form-group">
-                                            <label for="name" class="col-md-3 text-md-right col-form-label">Name</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="name" id="name" placeholder="Name" type="text"
-                                                    class="form-control" value="">
-                                            </div>
-                                        </div>
+        <form method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="product_name">Product Name</label>
+                <input type="text" class="form-control" id="product_name" name="product_name" required>
+            </div>
+            <div class="form-group">
+                <label for="category_id">Category</label>
+                <select class="form-control" id="category_id" name="category_id" required>
+                    <?php foreach ($categories as $category): ?>
+                        <option value="<?php echo $category['category_id']; ?>"><?php echo htmlspecialchars($category['category_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="brand_id">Brand</label>
+                <select class="form-control" id="brand_id" name="brand_id" required>
+                    <?php foreach ($brands as $brand): ?>
+                        <option value="<?php echo $brand['brand_id']; ?>"><?php echo htmlspecialchars($brand['brand_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="price">Price</label>
+                <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+            </div>
+            <div class="form-group">
+                <label for="sale_price">Sale Price (optional)</label>
+                <input type="number" step="0.01" class="form-control" id="sale_price" name="sale_price">
+            </div>
+            <div class="form-group">
+                <label for="product_image">Product Image</label>
+                <input type="file" class="form-control-file" id="product_image" name="product_image">
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="is_best_seller" name="is_best_seller">
+                <label class="form-check-label" for="is_best_seller">Best Seller</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="is_new_arrival" name="is_new_arrival">
+                <label class="form-check-label" for="is_new_arrival">New Arrival</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="is_hot_sale" name="is_hot_sale">
+                <label class="form-check-label" for="is_hot_sale">Hot Sale</label>
+            </div>
 
-                                        <div class="position-relative row form-group">
-                                            <label for="content"
-                                                class="col-md-3 text-md-right col-form-label">Content</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="content" id="content"
-                                                    placeholder="Content" type="text" class="form-control" value="">
-                                            </div>
-                                        </div>
+            <h5 class="mt-4">Product Variants</h5>
+            <div id="variants-container">
+                <div class="variant-entry mb-3">
+                    <div class="form-row">
+                        <div class="col">
+                            <select name="size_id[]" class="form-control" required>
+                                <option value="">Select Size</option>
+                                <?php foreach ($sizes as $size): ?>
+                                    <option value="<?php echo $size['size_id']; ?>"><?php echo htmlspecialchars($size['size_name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <select name="color_id[]" class="form-control" required>
+                                <option value="">Select Color</option>
+                                <?php foreach ($colors as $color): ?>
+                                    <option value="<?php echo $color['color_id']; ?>"><?php echo htmlspecialchars($color['color_name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <input type="number" name="stock[]" class="form-control" placeholder="Stock" required>
+                        </div>
+                        <div class="col">
+                            <input type="number" step="0.01" name="variant_price[]" class="form-control" placeholder="Price" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="add-variant" class="btn btn-secondary mt-2">Add Another Variant</button>
 
-                                        <div class="position-relative row form-group">
-                                            <label for="price"
-                                                class="col-md-3 text-md-right col-form-label">Price</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="price" id="price"
-                                                    placeholder="Price" type="text" class="form-control" value="">
-                                            </div>
-                                        </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Create Product</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-                                        <div class="position-relative row form-group">
-                                            <label for="discount"
-                                                class="col-md-3 text-md-right col-form-label">Discount</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="discount" id="discount"
-                                                    placeholder="Discount" type="text" class="form-control" value="">
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="weight"
-                                                class="col-md-3 text-md-right col-form-label">Weight</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="weight" id="weight"
-                                                    placeholder="Weight" type="text" class="form-control" value="">
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="position-relative row form-group">
-                                            <label for="sku"
-                                                class="col-md-3 text-md-right col-form-label">SKU</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="sku" id="sku"
-                                                    placeholder="SKU" type="text" class="form-control" value="">
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="tag"
-                                                class="col-md-3 text-md-right col-form-label">Tag</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <input required name="tag" id="tag"
-                                                    placeholder="Tag" type="text" class="form-control" value="">
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="featured"
-                                                class="col-md-3 text-md-right col-form-label">Featured</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <div class="position-relative form-check pt-sm-2">
-                                                    <input name="featured" id="featured" type="checkbox" value="1" class="form-check-input">
-                                                    <label for="featured" class="form-check-label">Featured</label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group">
-                                            <label for="description"
-                                                class="col-md-3 text-md-right col-form-label">Description</label>
-                                            <div class="col-md-9 col-xl-8">
-                                                <textarea class="form-control" name="description" id="description" placeholder="Description"></textarea>
-                                            </div>
-                                        </div>
-
-                                        <div class="position-relative row form-group mb-1">
-                                            <div class="col-md-9 col-xl-8 offset-md-2">
-                                                <a href="#" class="border-0 btn btn-outline-danger mr-1">
-                                                    <span class="btn-icon-wrapper pr-1 opacity-8">
-                                                        <i class="fa fa-times fa-w-20"></i>
-                                                    </span>
-                                                    <span>Cancel</span>
-                                                </a>
-
-                                                <button type="submit"
-                                                    class="btn-shadow btn-hover-shine btn btn-primary">
-                                                    <span class="btn-icon-wrapper pr-2 opacity-8">
-                                                        <i class="fa fa-download fa-w-20"></i>
-                                                    </span>
-                                                    <span>Save</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
+<script>
+document.getElementById('add-variant').addEventListener('click', function() {
+    var container = document.getElementById('variants-container');
+    var newEntry = container.children[0].cloneNode(true);
+    // Clear the values
+    newEntry.querySelectorAll('select, input').forEach(el => el.value = '');
+    container.appendChild(newEntry);
+});
+</script>
                         </div>
                     </div>
                 </div>
