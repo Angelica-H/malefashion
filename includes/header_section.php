@@ -51,14 +51,20 @@
                 </nav>
             </div>
             <div class="col-lg-3 col-md-3">
+           
             <div class="header__nav__option">
-                <a href="#" class="search-switch"><img src="img/icon/search.png" alt=""></a>
-                <a href="#"><img src="img/icon/heart.png" alt=""></a>
-                <a href="./shopping-cart.php"><img src="./assets/img/icon/cart.png" alt="">
-                    <span id="cart-count">0</span>
-                </a>
-                
-                <div class="price" id="cart-total">$0.00</div>
+    <a href="#" class="search-switch"><img src="img/icon/search.png" alt=""></a>
+    <a href="#"><img src="img/icon/heart.png" alt=""></a>
+    <a href="./shopping-cart.php"><img src="./assets/img/icon/cart.png" alt="">
+        <span id="cart-count">
+            <script>document.write(localStorage.getItem('cartCount') || '0');</script>
+        </span>
+    </a>
+    <div class="price">
+        Tổng: <span id="cart-total">
+            <script>document.write(localStorage.getItem('cartTotal') || '0 đ');</script>
+        </span>
+    </div>
 </div>
             </div>
         </div>

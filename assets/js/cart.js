@@ -1,15 +1,45 @@
+function addToCartFromData(productDataJson) {
+    const productData = JSON.parse(productDataJson);
+    addToCart(
+        productData.id,
+        productData.name,
+        productData.price,
+        productData.sale_price,
+        1, // Số lượng mặc định
+        null, // Size mặc định
+        null, // Màu mặc định
+        productData.availableSizes,
+        productData.availableColors,
+        productData.image
+    );
+}
+
 // Hàm để thêm sản phẩm vào giỏ hàng
-function addToCart(productId, productName, productPrice, quantity, size, color) {
+function addToCart(productId, productName, productPrice, salePrice, quantity, size, color, availableSizes, availableColors, image) {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
     // Nếu size hoặc color không được truyền, mặc định giá trị đầu tiên
-    size = size || document.querySelector('input[name="size"]:checked')?.value || 'Default Size';
-    color = color || document.querySelector('input[name="color"]:checked')?.value || 'Default Color';
+    size = size || document.querySelector('input[name="size"]:checked')?.value || availableSizes[0];
+    color = color || document.querySelector('input[name="color"]:checked')?.value || availableColors[0];
 
     // Kiểm tra sản phẩm đã có trong giỏ hàng chưa
-    const productIndex = cart.findIndex(product => product.id === productId && product.size === size && product.color === color);
+    const productIndex = cart.findIndex(product => 
+        product.id === productId && product.size === size && product.color === color
+    );
+    
     if (productIndex === -1) {
-        cart.push({ id: productId, name: productName, price: productPrice, quantity: quantity, size: size, color: color });
+        cart.push({ 
+            id: productId, 
+            name: productName, 
+            price: productPrice,
+            sale_price: salePrice,
+            quantity: quantity, 
+            size: size, 
+            color: color,
+            availableSizes: availableSizes,
+            availableColors: availableColors,
+            image: image
+        });
     } else {
         cart[productIndex].quantity += quantity;
     }
@@ -25,48 +55,49 @@ function displayCart() {
     const cartContent = document.getElementById('cart-content');
     const totalAmountDisplay = document.getElementById('total-amount');
     let totalAmount = 0;
-    let totalQuantity = 0;
 
     cartContent.innerHTML = '';
 
     if (cart.length === 0) {
-        cartContent.innerHTML = "<tr><td colspan='5'>Giỏ hàng của bạn đang trống.</td></tr>";
-        totalAmountDisplay.innerHTML = '$0.00';
+        cartContent.innerHTML = "<tr><td colspan='6'>Giỏ hàng của bạn đang trống.</td></tr>";
+        totalAmountDisplay.innerHTML = '0 đ';
         return;
     }
 
     cart.forEach((product, index) => {
-        const totalPrice = product.price * product.quantity;
+        const price = product.sale_price && parseFloat(product.sale_price) > 0 ? product.sale_price : product.price;
+        const totalPrice = price * product.quantity;
         totalAmount += totalPrice;
-        totalQuantity += product.quantity;
 
         cartContent.innerHTML += `
             <tr>
                 <td class="product__cart__item">
                     <div class="product__cart__item__pic">
-                        <img src="img/product/${product.id}.jpg" alt="">
+                        <img src="${product.image}" alt="${product.name}" style="max-width: 100px; max-height: 100px; object-fit: cover;">
                     </div>
                     <div class="product__cart__item__text">
                         <h6>${product.name}</h6>
-                        <h5>$${product.price.toFixed(2)}</h5>
+                        ${product.sale_price && parseFloat(product.sale_price) > 0 ? 
+                            `<h5><span style="text-decoration: line-through;">${parseFloat(product.price).toLocaleString('vi-VN')} đ</span> ${parseFloat(product.sale_price).toLocaleString('vi-VN')} đ</h5>` :
+                            `<h5>${parseFloat(product.price).toLocaleString('vi-VN')} đ</h5>`
+                        }
                     </div>
                 </td>
                 <td class="size__item">
                     <select onchange="updateSize(${index}, this.value)">
-                        <option value="S" ${product.size === 'S' ? 'selected' : ''}>S</option>
-                        <option value="M" ${product.size === 'M' ? 'selected' : ''}>M</option>
-                        <option value="L" ${product.size === 'L' ? 'selected' : ''}>L</option>
-                        <option value="XL" ${product.size === 'XL' ? 'selected' : ''}>XL</option>
-                        <option value="XXL" ${product.size === 'XXL' ? 'selected' : ''}>XXL</option>
-                        <!-- Thêm các tùy chọn size khác từ cơ sở dữ liệu nếu có -->
+                        ${product.availableSizes.sort((a, b) => {
+                            const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+                            return sizeOrder.indexOf(a) - sizeOrder.indexOf(b);
+                        }).map(size => 
+                            `<option value="${size}" ${product.size === size ? 'selected' : ''}>${size}</option>`
+                        ).join('')}
                     </select>
                 </td>
                 <td class="color__item">
                     <select onchange="updateColor(${index}, this.value)">
-                        <option value="Red" ${product.color === 'Red' ? 'selected' : ''}>Red</option>
-                        <option value="Blue" ${product.color === 'Blue' ? 'selected' : ''}>Blue</option>
-                        <option value="Green" ${product.color === 'Green' ? 'selected' : ''}>Green</option>
-                        <!-- Thêm các tùy chọn màu khác từ cơ sở dữ liệu nếu có -->
+                        ${product.availableColors.sort().map(color => 
+                            `<option value="${color}" ${product.color === color ? 'selected' : ''}>${color}</option>`
+                        ).join('')}
                     </select>
                 </td>
                 <td class="quantity__item">
@@ -76,7 +107,7 @@ function displayCart() {
                         </div>
                     </div>
                 </td>
-                <td class="cart__price">$${totalPrice.toFixed(2)}</td>
+                <td class="cart__price">${totalPrice.toLocaleString('vi-VN')} đ</td>
                 <td class="cart__close">
                     <i class="fa fa-close" onclick="removeFromCart(${index})"></i>
                 </td>
@@ -84,7 +115,7 @@ function displayCart() {
         `;
     });
 
-    totalAmountDisplay.innerHTML = `$${totalAmount.toFixed(2)}`;
+    totalAmountDisplay.innerHTML = `${totalAmount.toLocaleString('vi-VN')} đ`;
     updateCartDisplay();
 }
 
@@ -98,11 +129,30 @@ function updateCart(index, newQuantity) {
     }
 
     if (cart.length > index) {
-        cart[index].quantity = parseInt(newQuantity); // Cập nhật số lượng mới
-        localStorage.setItem('cart', JSON.stringify(cart)); // Lưu lại vào localStorage
-        displayCart(); // Cập nhật lại giỏ hàng sau khi thay đổi
+        cart[index].quantity = parseInt(newQuantity);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        displayCart();
     }
-    calculateCartTotal(); 
+}
+
+// Hàm để cập nhật kích thước sản phẩm trong giỏ hàng
+function updateSize(index, newSize) {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    if (cart.length > index) {
+        cart[index].size = newSize;
+        localStorage.setItem('cart', JSON.stringify(cart));
+        displayCart();
+    }
+}
+
+// Hàm để cập nhật màu sắc sản phẩm trong giỏ hàng
+function updateColor(index, newColor) {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    if (cart.length > index) {
+        cart[index].color = newColor;
+        localStorage.setItem('cart', JSON.stringify(cart));
+        displayCart();
+    }
 }
 
 // Hàm để xóa sản phẩm khỏi giỏ hàng
@@ -110,12 +160,11 @@ function removeFromCart(index) {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
     if (cart.length > index) {
-        cart.splice(index, 1); // Xóa sản phẩm theo chỉ mục
+        cart.splice(index, 1);
         localStorage.setItem('cart', JSON.stringify(cart));
         alert("Sản phẩm đã được xóa khỏi giỏ hàng");
-        displayCart(); // Cập nhật lại giỏ hàng
+        displayCart();
     }
-    calculateCartTotal(); 
 }
 
 // Hàm để đặt hàng
@@ -126,13 +175,11 @@ function placeOrder() {
         return;
     }
 
-    // Giả lập gọi API để đặt hàng
+    // Gửi dữ liệu đơn hàng đến server (cần implement)
     console.log("Đang xử lý đơn hàng...");
-
-    // Xóa giỏ hàng sau khi đặt thành công
     localStorage.removeItem('cart');
     alert("Đặt hàng thành công!");
-    displayCart(); // Cập nhật lại giỏ hàng
+    displayCart();
 }
 
 // Hàm để tính tổng số lượng và tổng tiền giỏ hàng
@@ -140,9 +187,18 @@ function updateCartDisplay() {
     const totalQuantity = calculateTotalCartQuantity();
     const totalPrice = calculateTotalCartPrice();
 
-    document.getElementById('cart-count').textContent = totalQuantity; // Cập nhật thẻ hiển thị số lượng
-    document.getElementById('cart-total').textContent = `$${totalPrice}`; // Cập nhật thẻ hiển thị tổng tiền
-    calculateCartTotal(); 
+    const cartCountElement = document.getElementById('cart-count');
+    const cartTotalElement = document.getElementById('cart-total');
+
+    if (cartCountElement) {
+        cartCountElement.textContent = totalQuantity;
+        localStorage.setItem('cartCount', totalQuantity);
+    }
+    if (cartTotalElement) {
+        const formattedPrice = `${parseFloat(totalPrice).toLocaleString('vi-VN')} đ`;
+        cartTotalElement.textContent = formattedPrice;
+        localStorage.setItem('cartTotal', formattedPrice);
+    }
 }
 
 // Hàm để tính tổng số lượng sản phẩm trong giỏ hàng
@@ -154,11 +210,38 @@ function calculateTotalCartQuantity() {
 // Hàm để tính tổng tiền trong giỏ hàng
 function calculateTotalCartPrice() {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
-    return cart.reduce((total, product) => total + (product.price * product.quantity), 0).toFixed(2);
+    return cart.reduce((total, product) => {
+        const price = product.sale_price && parseFloat(product.sale_price) > 0 ? product.sale_price : product.price;
+        return total + (price * product.quantity);
+    }, 0).toFixed(2);
 }
 
 // Gọi hàm hiển thị giỏ hàng và cập nhật khi tải trang
 document.addEventListener('DOMContentLoaded', function () {
-    displayCart(); // Hiển thị giỏ hàng khi tải trang
-    updateCartDisplay(); // Cập nhật hiển thị giỏ hàng
+    displayCart();
+    updateCartDisplay();
+})
+
+function calculateCartTotal() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const shippingFee = 30; // Phí ship
+    const totalAmount = cart.reduce((total, product) => {
+        const price = product.sale_price && parseFloat(product.sale_price) > 0 ? product.sale_price : product.price;
+        return total + price * product.quantity;
+    }, 0) + shippingFee;
+
+    // Cập nhật tổng tiền vào phần tử hiển thị
+    document.getElementById('total-amount').textContent = totalAmount.toLocaleString('vi-VN') + ' đ';
+    document.getElementById('total_amount').value = totalAmount;
+}
+
+function submitCheckout() {
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
+    document.getElementById('cart_data').value = JSON.stringify(cart);
+    calculateCartTotal();
+}
+
+// Tính tổng tiền và hiển thị khi tải trang
+document.addEventListener('DOMContentLoaded', function () {
+    calculateCartTotal();
 });

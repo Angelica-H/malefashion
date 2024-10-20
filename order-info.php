@@ -44,90 +44,100 @@ $result = $conn->query($sql);
     <!-- Header Section End -->
 
     <div class="container mt-5">
-        <h2 class="text-center">Danh Sách Đơn Hàng</h2>
+    <h2 class="text-center">Danh Sách Đơn Hàng</h2>
 
-        <table class="table table-bordered mt-4">
-            <thead>
-                <tr>
-                    <th>Mã Đơn Hàng</th>
-                    <th>Ngày đặt</th>
-                    <th>Thông Tin Người Nhận</th>
-                    <th>Tổng Tiền</th>
-                    <th>Trạng Thái Đơn Hàng</th>
-                    <th>Chi Tiết</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td>" . $row['order_id'] . "</td>";
-                        echo "<td>" . $row['order_date'] . "</td>";
-                        echo "<td>" . $row['receiver_name'] . "<br>" . $row['shipping_address'] . "<br>SĐT: " . $row['phone_number'] . "</td>";
-                        echo "<td>₫" . number_format($row['total'], 0, ',', '.') . "</td>";
-                        echo "<td>" . $row['status'] . "</td>";
-                        echo "<td>
-                            <button class='btn btn-info' data-toggle='modal' data-target='#orderDetailsModal" . $row['order_id'] . "' data-id='" . $row['order_id'] . "'>Xem Chi Tiết</button>
-                        </td>";
-                        echo "</tr>";
-
-                        // Modal cho chi tiết đơn hàng
-                        echo "<div class='modal fade' id='orderDetailsModal" . $row['order_id'] . "' tabindex='-1' role='dialog' aria-labelledby='orderDetailsModalLabel" . $row['order_id'] . "' aria-hidden='true'>
-                            <div class='modal-dialog' role='document'>
-                                <div class='modal-content'>
-                                    <div class='modal-header'>
-                                        <h5 class='modal-title' id='orderDetailsModalLabel" . $row['order_id'] . "'>Chi Tiết Đơn Hàng " . $row['order_id'] . "</h5>
-                                        <button type='button' class='close' data-dismiss='modal' aria-label='Đóng'>
-                                            <span aria-hidden='true'>&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class='modal-body'>
-                                        <ul id='order-details-list-" . $row['order_id'] . "'>
-                                            <!-- Chi tiết sẽ được chèn vào đây -->
-                                        </ul>
-                                    </div>
-                                    <div class='modal-footer'>
-                                        <button type='button' class='btn btn-secondary' data-dismiss='modal'>Đóng</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>";
-                    }
-                } else {
-                    echo "<tr><td colspan='5' class='text-center'>Không có đơn hàng nào.</td></tr>";
+    <table class="table table-bordered mt-4">
+        <thead>
+            <tr>
+                <th>Mã Đơn Hàng</th>
+                <th>Ngày đặt</th>
+                <th>Thông Tin Người Nhận</th>
+                <th>Tổng Tiền</th>
+                <th>Trạng Thái Đơn Hàng</th>
+                <th>Chi Tiết</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            if ($result->num_rows > 0) {
+                while ($row = $result->fetch_assoc()) {
+                    echo "<tr>";
+                    echo "<td>" . $row['order_id'] . "</td>";
+                    echo "<td>" . $row['order_date'] . "</td>";
+                    echo "<td>" . $row['shipping_address'] . "</td>";
+                    echo "<td>" . number_format($row['total'], 0, ',', '.') . " đ</td>";
+                    echo "<td>" . $row['status'] . "</td>";
+                    echo "<td>
+                        <button class='btn btn-info view-details' data-toggle='modal' data-target='#orderDetailsModal' data-id='" . $row['order_id'] . "'>Xem Chi Tiết</button>
+                    </td>";
+                    echo "</tr>";
                 }
-                ?>
-            </tbody>
-        </table>
+            } else {
+                echo "<tr><td colspan='6' class='text-center'>Không có đơn hàng nào.</td></tr>";
+            }
+            ?>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal cho chi tiết đơn hàng -->
+<div class='modal fade' id='orderDetailsModal' tabindex='-1' role='dialog' aria-labelledby='orderDetailsModalLabel' aria-hidden='true'>
+    <div class='modal-dialog modal-lg' role='document'>
+        <div class='modal-content'>
+            <div class='modal-header'>
+                <h5 class='modal-title' id='orderDetailsModalLabel'>Chi Tiết Đơn Hàng</h5>
+                <button type='button' class='close' data-dismiss='modal' aria-label='Đóng'>
+                    <span aria-hidden='true'>&times;</span>
+                </button>
+            </div>
+            <div class='modal-body'>
+                <table class='table'>
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Kích thước</th>
+                            <th>Màu sắc</th>
+                            <th>Số lượng</th>
+                            <th>Giá</th>
+                            <th>Tổng</th>
+                        </tr>
+                    </thead>
+                    <tbody id='order-details-list'>
+                        <!-- Chi tiết sẽ được chèn vào đây -->
+                    </tbody>
+                </table>
+            </div>
+            <div class='modal-footer'>
+                <button type='button' class='btn btn-secondary' data-dismiss='modal'>Đóng</button>
+            </div>
+        </div>
     </div>
+</div>
 
-    <script>
-        $(document).ready(function() {
-            $('.btn-info').click(function() {
-                var orderId = $(this).data('id'); // Lấy ID đơn hàng từ thuộc tính data-id
-
-                // Gọi AJAX để lấy chi tiết đơn hàng
-                $.ajax({
-                    url: 'includes/get_order_details.php', // Tệp xử lý để lấy chi tiết đơn hàng
-                    type: 'POST',
-                    data: { order_id: orderId },
-                    success: function(response) {
-                        // Chèn dữ liệu vào modal
-                        $('#order-details-list-' + orderId).html(response);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error("Lỗi: " + error);
-                    }
-                });
-            });
+<script>
+$(document).ready(function() {
+    $('.view-details').click(function() {
+        var orderId = $(this).data('id');
+        
+        $.ajax({
+            url: 'includes/get_order_details.php',
+            type: 'POST',
+            data: { order_id: orderId },
+            success: function(response) {
+                $('#order-details-list').html(response);
+                $('#orderDetailsModalLabel').text('Chi Tiết Đơn Hàng ' + orderId);
+            },
+            error: function(xhr, status, error) {
+                console.error("Lỗi: " + error);
+            }
         });
-    </script>
+    });
+});
+</script>
 
     <!-- Footer Section Begin -->
     <?php include "includes/footer_section.php"; ?>
     <!-- Footer Section End -->
-
 </body>
 </html>
 

@@ -182,28 +182,7 @@ session_start();
 
     <!-- Js Plugins -->
     <?php include "includes/js.php" ?>
-    <script>
-        function calculateCartTotal() {
-            const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const shippingFee = 30; // Phí ship
-            const totalAmount = cart.reduce((total, product) => total + product.price * product.quantity, 0) + shippingFee;
-
-            // Cập nhật tổng tiền vào phần tử hiển thị
-            document.getElementById('total-amount').textContent = totalAmount + ' USD';
-            document.getElementById('total_amount').value = totalAmount;
-        }
-
-        function submitCheckout() {
-            const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            document.getElementById('cart_data').value = JSON.stringify(cart);
-            calculateCartTotal();
-        }
-
-        // Tính tổng tiền và hiển thị khi tải trang
-        document.addEventListener('DOMContentLoaded', function () {
-            calculateCartTotal();
-        });
-    </script>
+    
 
 </body>
 

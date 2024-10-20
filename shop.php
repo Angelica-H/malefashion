@@ -3,81 +3,57 @@ include 'includes/db_connect.php'; // Kết nối cơ sở dữ liệu
 
 session_start();
 
-// Lấy tham số tìm kiếm, phân trang, sắp xếp
+// Xử lý các tham số tìm kiếm và lọc
 $search = isset($_GET['search']) ? $_GET['search'] : '';
-$category = isset($_GET['category']) && $_GET['category'] !== 'all' ? $_GET['category'] : null;
+$category_id = isset($_GET['category']) ? (int)$_GET['category'] : 0;
+$brand_id = isset($_GET['brand']) ? (int)$_GET['brand'] : 0;
+$size_id = isset($_GET['size']) ? (int)$_GET['size'] : 0;
+$color_id = isset($_GET['color']) ? (int)$_GET['color'] : 0;
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'price-asc';
-$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
-$limit = 12;
-$offset = ($page - 1) * $limit;
 
-// Lấy thông tin kích thước và màu sắc từ form
-$selectedSize = isset($_GET['size']) ? $_GET['size'] : null;
-$selectedColor = isset($_GET['color']) ? $_GET['color'] : null;
+// Xây dựng câu truy vấn SQL
+$sql = "SELECT DISTINCT p.*, c.category_name, b.brand_name 
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.category_id
+        LEFT JOIN brands b ON p.brand_id = b.brand_id
+        LEFT JOIN product_variants pv ON p.product_id = pv.product_id
+        WHERE 1=1";
 
-// Câu truy vấn SQL động
-$query = "SELECT * FROM products WHERE 1=1";
-
-// Thêm điều kiện tìm kiếm
-if ($search) {
-    $query .= " AND (product_name LIKE '%$search%' OR description LIKE '%$search%')";
+if (!empty($search)) {
+    $sql .= " AND (p.product_name LIKE '%$search%' OR c.category_name LIKE '%$search%' OR b.brand_name LIKE '%$search%')";
+}
+if ($category_id > 0) {
+    $sql .= " AND p.category_id = $category_id";
+}
+if ($brand_id > 0) {
+    $sql .= " AND p.brand_id = $brand_id";
+}
+if ($size_id > 0) {
+    $sql .= " AND pv.size_id = $size_id";
+}
+if ($color_id > 0) {
+    $sql .= " AND pv.color_id = $color_id";
 }
 
-// Thêm điều kiện lọc danh mục
-if ($category) {
-    $query .= " AND category_id = '$category'";
+// Sắp xếp
+switch ($sort) {
+    case 'price-asc':
+        $sql .= " ORDER BY p.price ASC";
+        break;
+    case 'price-desc':
+        $sql .= " ORDER BY p.price DESC";
+        break;
+    case 'name-asc':
+        $sql .= " ORDER BY p.product_name ASC";
+        break;
+    case 'name-desc':
+        $sql .= " ORDER BY p.product_name DESC";
+        break;
+    default:
+        $sql .= " ORDER BY p.price ASC";
 }
 
-// Thêm điều kiện lọc kích thước
-if ($selectedSize) {
-    $query .= " AND product_id IN (SELECT product_id FROM product_variants WHERE size_id IN (SELECT size_id FROM sizes WHERE size_name = '$selectedSize'))";
-}
-
-// Thêm điều kiện lọc màu sắc
-if ($selectedColor) {
-    $query .= " AND product_id IN (SELECT product_id FROM product_variants WHERE color_id IN (SELECT color_id FROM colors WHERE color_name = '$selectedColor'))";
-}
-
-// Thêm điều kiện sắp xếp
-if ($sort == 'price-asc') {
-    $query .= " ORDER BY price ASC";
-} elseif ($sort == 'price-desc') {
-    $query .= " ORDER BY price DESC";
-} elseif ($sort == 'name-asc') {
-    $query .= " ORDER BY product_name ASC";
-} elseif ($sort == 'name-desc') {
-    $query .= " ORDER BY product_name DESC";
-}
-
-// Thêm phân trang
-$query .= " LIMIT $offset, $limit";
-
-// Thực thi truy vấn
-$result = $conn->query($query);
-
-// Đếm tổng số sản phẩm để phân trang
-$totalQuery = "SELECT COUNT(*) as total FROM products WHERE 1=1";
-
-// Thêm điều kiện tương tự vào truy vấn đếm
-if ($search) {
-    $totalQuery .= " AND (product_name LIKE '%$search%' OR description LIKE '%$search%')";
-}
-
-if ($category) {
-    $totalQuery .= " AND category_id = '$category'";
-}
-
-if ($selectedSize) {
-    $totalQuery .= " AND product_id IN (SELECT product_id FROM product_variants WHERE size_id IN (SELECT size_id FROM sizes WHERE size_name = '$selectedSize'))";
-}
-
-if ($selectedColor) {
-    $totalQuery .= " AND product_id IN (SELECT product_id FROM product_variants WHERE color_id IN (SELECT color_id FROM colors WHERE color_name = '$selectedColor'))";
-}
-
-$totalResult = $conn->query($totalQuery);
-$totalProducts = $totalResult->fetch_assoc()['total'];
-$totalPages = ceil($totalProducts / $limit);
+$result = $conn->query($sql);
 ?>
 
 
@@ -136,285 +112,208 @@ $totalPages = ceil($totalProducts / $limit);
 
     <!-- Shop Section Begin -->
     <section class="shop spad">
-        <form method="GET" action="">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-3">
-                        <div class="shop__sidebar">
-                            <div class="shop__sidebar__search">
-                                <form action="#">
-                                    <input type="text" placeholder="Search...">
-                                    <button type="submit"><span class="icon_search"></span></button>
-                                </form>
-                            </div>
-                            <div class="shop__sidebar__accordion">
-                                <div class="accordion" id="accordionExample">
-                                    <div class="card">
-                                        <div class="card-heading">
-                                            <a data-toggle="collapse" data-target="#collapseOne">Categories</a>
-                                        </div>
-                                        <div id="collapseOne" class="collapse show" data-parent="#accordionExample">
-                                            <div class="card-body">
-                                                <div class="shop__sidebar__categories">
-                                                    <ul class="nice-scroll">
-                                                        <li><a href="#">Men (20)</a></li>
-                                                        <li><a href="#">Women (20)</a></li>
-                                                        <li><a href="#">Bags (20)</a></li>
-                                                        <li><a href="#">Clothing (20)</a></li>
-                                                        <li><a href="#">Shoes (20)</a></li>
-                                                        <li><a href="#">Accessories (20)</a></li>
-                                                        <li><a href="#">Kids (20)</a></li>
-                                                        <li><a href="#">Kids (20)</a></li>
-                                                        <li><a href="#">Kids (20)</a></li>
-                                                    </ul>
-                                                </div>
+    <form method="GET" action="">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-3">
+                    <div class="shop__sidebar">
+                        <div class="shop__sidebar__search">
+                            <input type="text" name="search" placeholder="Search..." value="<?php echo htmlspecialchars($search); ?>">
+                            <button type="submit"><span class="icon_search"></span></button>
+                        </div>
+                        <div class="shop__sidebar__accordion">
+                            <div class="accordion" id="accordionExample">
+                                <div class="card">
+                                    <div class="card-heading">
+                                        <a data-toggle="collapse" data-target="#collapseOne">Categories</a>
+                                    </div>
+                                    <div id="collapseOne" class="collapse show" data-parent="#accordionExample">
+                                        <div class="card-body">
+                                            <div class="shop__sidebar__categories">
+                                                <ul class="nice-scroll">
+                                                    <?php
+                                                    $cat_sql = "SELECT c.*, COUNT(p.product_id) as product_count 
+                                                                FROM categories c
+                                                                LEFT JOIN products p ON c.category_id = p.category_id
+                                                                GROUP BY c.category_id";
+                                                    $cat_result = $conn->query($cat_sql);
+                                                    while ($cat = $cat_result->fetch_assoc()) {
+                                                        echo "<li><a href='?category={$cat['category_id']}'>{$cat['category_name']} ({$cat['product_count']})</a></li>";
+                                                    }
+                                                    ?>
+                                                </ul>
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- <div class="card">
+                                </div>
+                                <div class="card">
                                     <div class="card-heading">
-                                        <a data-toggle="collapse" data-target="#collapseTwo">Branding</a>
+                                        <a data-toggle="collapse" data-target="#collapseTwo">Brands</a>
                                     </div>
                                     <div id="collapseTwo" class="collapse show" data-parent="#accordionExample">
                                         <div class="card-body">
                                             <div class="shop__sidebar__brand">
                                                 <ul>
-                                                    <li><a href="#">Louis Vuitton</a></li>
-                                                    <li><a href="#">Chanel</a></li>
-                                                    <li><a href="#">Hermes</a></li>
-                                                    <li><a href="#">Gucci</a></li>
+                                                    <?php
+                                                    $brand_sql = "SELECT b.*, COUNT(p.product_id) as product_count 
+                                                                  FROM brands b
+                                                                  LEFT JOIN products p ON b.brand_id = p.brand_id
+                                                                  GROUP BY b.brand_id";
+                                                    $brand_result = $conn->query($brand_sql);
+                                                    while ($brand = $brand_result->fetch_assoc()) {
+                                                        echo "<li><a href='?brand={$brand['brand_id']}'>{$brand['brand_name']} ({$brand['product_count']})</a></li>";
+                                                    }
+                                                    ?>
                                                 </ul>
                                             </div>
                                         </div>
                                     </div>
-                                </div> -->
-                                    <!-- <div class="card">
+                                </div>
+                                <div class="card">
                                     <div class="card-heading">
-                                        <a data-toggle="collapse" data-target="#collapseThree">Filter Price</a>
+                                        <a data-toggle="collapse" data-target="#collapseFour">Size</a>
                                     </div>
-                                    <div id="collapseThree" class="collapse show" data-parent="#accordionExample">
+                                    <div id="collapseFour" class="collapse show" data-parent="#accordionExample">
                                         <div class="card-body">
-                                            <div class="shop__sidebar__price">
-                                                <ul>
-                                                    <li><a href="#">$0.00 - $50.00</a></li>
-                                                    <li><a href="#">$50.00 - $100.00</a></li>
-                                                    <li><a href="#">$100.00 - $150.00</a></li>
-                                                    <li><a href="#">$150.00 - $200.00</a></li>
-                                                    <li><a href="#">$200.00 - $250.00</a></li>
-                                                    <li><a href="#">250.00+</a></li>
-                                                </ul>
+                                            <div class="shop__sidebar__size">
+                                                <?php
+                                                $size_sql = "SELECT * FROM sizes";
+                                                $size_result = $conn->query($size_sql);
+                                                while ($size = $size_result->fetch_assoc()) {
+                                                    echo "<label for='size-{$size['size_id']}'>
+                                                            <input type='radio' id='size-{$size['size_id']}' name='size' value='{$size['size_id']}' " . ($size_id == $size['size_id'] ? 'checked' : '') . ">
+                                                            {$size['size_name']}
+                                                          </label>";
+                                                }
+                                                ?>
                                             </div>
                                         </div>
                                     </div>
-                                </div> -->
-                                    <?php
-                                    include './includes/db_connect.php';
-
-                                    // Truy vấn để lấy danh sách kích thước và màu sắc
-                                    $sizeQuery = "SELECT * FROM sizes";
-                                    $colorQuery = "SELECT * FROM colors";
-
-                                    $sizeResult = $conn->query($sizeQuery);
-                                    $colorResult = $conn->query($colorQuery);
-
-                                    // Lưu kích thước vào mảng
-                                    $sizes = $sizeResult->num_rows > 0 ? $sizeResult->fetch_all(MYSQLI_ASSOC) : [];
-
-                                    // Lưu màu sắc vào mảng
-                                    $colors = $colorResult->num_rows > 0 ? $colorResult->fetch_all(MYSQLI_ASSOC) : [];
-                                    ?>
-                                    <div class="card">
-                                        <div class="card-heading">
-                                            <a data-toggle="collapse" data-target="#collapseFour">Size</a>
-                                        </div>
-                                        <div id="collapseFour" class="collapse show" data-parent="#accordionExample">
-                                            <div class="card-body">
-                                                <div class="shop__sidebar__size">
-                                                    <?php foreach ($sizes as $size): ?>
-                                                        <label
-                                                            class="<?php echo ($selectedSize == $size['size_name']) ? 'active' : ''; ?>"
-                                                            for="<?php echo htmlspecialchars($size['size_name']); ?>">
-                                                            <input type="radio"
-                                                                id="<?php echo htmlspecialchars($size['size_name']); ?>"
-                                                                name="size"
-                                                                value="<?php echo htmlspecialchars($size['size_name']); ?>"
-                                                                onchange="this.form.submit()">
-                                                            <?php echo htmlspecialchars($size['size_name']); ?>
-                                                        </label>
-                                                    <?php endforeach; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card">
-                                        <div class="card-heading">
-                                            <a data-toggle="collapse" data-target="#collapseFive">Colors</a>
-                                        </div>
-                                        <div id="collapseFive" class="collapse show" data-parent="#accordionExample">
-                                            <div class="card-body">
-                                                <div class="shop__sidebar__color">
-                                                    <?php foreach ($colors as $color): ?>
-                                                        <label
-                                                            class="<?php echo ($selectedColor == $color['color_code']) ? 'active' : ''; ?>"
-                                                            class="c-<?php echo $color['color_id']; ?>"
-                                                            for="color-<?php echo $color['color_id']; ?>"
-                                                            style="background-color: <?php echo htmlspecialchars($color['color_code']); ?>">
-                                                            <input type="radio" id="color-<?php echo $color['color_id']; ?>"
-                                                                name="color"
-                                                                value="<?php echo htmlspecialchars($color['color_code']); ?>"
-                                                                onchange="this.form.submit()">
-                                                        </label>
-                                                    <?php endforeach; ?>
-
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- <div class="card">
+                                </div>
+                                <div class="card">
                                     <div class="card-heading">
-                                        <a data-toggle="collapse" data-target="#collapseSix">Tags</a>
+                                        <a data-toggle="collapse" data-target="#collapseFive">Colors</a>
                                     </div>
-                                    <div id="collapseSix" class="collapse show" data-parent="#accordionExample">
+                                    <div id="collapseFive" class="collapse show" data-parent="#accordionExample">
                                         <div class="card-body">
-                                            <div class="shop__sidebar__tags">
-                                                <a href="#">Product</a>
-                                                <a href="#">Bags</a>
-                                                <a href="#">Shoes</a>
-                                                <a href="#">Fashio</a>
-                                                <a href="#">Clothing</a>
-                                                <a href="#">Hats</a>
-                                                <a href="#">Accessories</a>
+                                            <div class="shop__sidebar__color">
+                                                <?php
+                                                $color_sql = "SELECT * FROM colors";
+                                                $color_result = $conn->query($color_sql);
+                                                while ($color = $color_result->fetch_assoc()) {
+                                                    echo "<label class='c-{$color['color_id']}' for='color-{$color['color_id']}' style='background-color: {$color['color_code']}'>
+                                                            <input type='radio' id='color-{$color['color_id']}' name='color' value='{$color['color_id']}' " . ($color_id == $color['color_id'] ? 'checked' : '') . ">
+                                                          </label>";
+                                                }
+                                                ?>
                                             </div>
                                         </div>
                                     </div>
-                                </div> -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-9">
-                        <div class="shop__product__option">
-                            <div class="row">
-                                <div class="col-lg-6 col-md-6 col-sm-6">
-                                    <div class="shop__product__option__left">
-                                        <p>Showing 1–12 of 126 results</p>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6 col-md-6 col-sm-6">
-                                    <div class="shop__product__option__right">
-                                        <p>Sort by Price:</p>
-                                        <select name="sort" onchange="this.form.submit()">
-                                            <option value="price-asc" <?php echo ($sort == 'price-asc') ? 'selected' : ''; ?>>Low To High</option>
-                                            <option value="price-desc" <?php echo ($sort == 'price-desc') ? 'selected' : ''; ?>>High To Low</option>
-                                            <option value="name-asc" <?php echo ($sort == 'name-asc') ? 'selected' : ''; ?>>Name A-Z</option>
-                                            <option value="name-desc" <?php echo ($sort == 'name-desc') ? 'selected' : ''; ?>>Name Z-A</option>
-                                        </select>
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <?php if ($result->num_rows > 0): ?>
-                                <?php while ($row = $result->fetch_assoc()): ?>
-                                    <div class="col-lg-4 col-md-6 col-sm-6">
-                                        <div class="product__item">
-                                            <div class="product__item__pic set-bg"
-                                                data-setbg="img/product/<?php echo $row['product_image']; ?>">
-                                                <ul class="product__hover">
-                                                    <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                                    <li><a href="#"><img src="img/icon/compare.png" alt="">
-                                                            <span>Compare</span></a>
-                                                    </li>
-                                                    <li><a href="shop-details.php?id=<?php echo $row['product_id']; ?>"><img
-                                                                src="img/icon/search.png" alt=""></a></li>
-                                                </ul>
-                                            </div>
-                                            <div class="product__item__text">
-                                                <h6><?php echo $row['product_name']; ?></h6>
-                                                <a href="javascript:void(0)" class="add-cart"
-                                    data-product-id="<?php echo $row['product_id']; ?>"
-                                    data-product-name="<?php echo htmlspecialchars($row['product_name']); ?>"
-                                    data-product-price="<?php echo $row['price']; ?>" onclick="addToCart(
-                                        '<?php echo $row['product_id']; ?>',
-                                        '<?php echo addslashes($row['product_name']); ?>',
-                                        <?php echo $row['price']; ?>, 
-                                        1,  
-                                        null,
-                                        (document.querySelector('input[name=color_<?php echo $row['product_id']; ?>]:checked')?.value ?? 'Black')
-                                        )">
-                                    Thêm vào giỏ hàng
-                                </a>
-                                                <div class="rating">
-                                                    <i class="fa fa-star-o"></i>
-                                                    <i class="fa fa-star-o"></i>
-                                                    <i class="fa fa-star-o"></i>
-                                                    <i class="fa fa-star-o"></i>
-                                                    <i class="fa fa-star-o"></i>
-                                                </div>
-                                                <h5>$<?php echo number_format($row['price'], 2); ?></h5>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <p>Không có sản phẩm nào.</p>
-                            <?php endif; ?>
-                            <!---
-
-                        <div class="col-lg-4 col-md-6 col-sm-6">
-                            <div class="product__item">
-                                <div class="product__item__pic set-bg" data-setbg="img/product/product-14.jpg">
-                                    <ul class="product__hover">
-                                        <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                        <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a>
-                                        </li>
-                                        <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                                    </ul>
-                                </div>
-                                <div class="product__item__text">
-                                    <h6>Basic Flowing Scarf</h6>
-                                    <a href="#" class="add-cart">+ Add To Cart</a>
-                                    <div class="rating">
-                                        <i class="fa fa-star-o"></i>
-                                        <i class="fa fa-star-o"></i>
-                                        <i class="fa fa-star-o"></i>
-                                        <i class="fa fa-star-o"></i>
-                                        <i class="fa fa-star-o"></i>
-                                    </div>
-                                    <h5>$26.28</h5>
-                                    <div class="product__color__select">
-                                        <label for="pc-40">
-                                            <input type="radio" id="pc-40">
-                                        </label>
-                                        <label class="active black" for="pc-41">
-                                            <input type="radio" id="pc-41">
-                                        </label>
-                                        <label class="grey" for="pc-42">
-                                            <input type="radio" id="pc-42">
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        --->
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <div class="product__pagination">
-                                    <a class="active" href="#">1</a>
-                                    <a href="#">2</a>
-                                    <a href="#">3</a>
-                                    <span>...</span>
-                                    <a href="#">21</a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div class="col-lg-9">
+                    <div class="shop__product__option">
+                        <div class="row">
+                            <div class="col-lg-6 col-md-6 col-sm-6">
+                                <div class="shop__product__option__left">
+                                    <p>Showing <?php echo $result->num_rows; ?> results</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 col-md-6 col-sm-6">
+                                <div class="shop__product__option__right">
+                                    <p>Sort by Price:</p>
+                                    <select name="sort" onchange="this.form.submit()">
+                                        <option value="price-asc" <?php echo ($sort == 'price-asc') ? 'selected' : ''; ?>>Low To High</option>
+                                        <option value="price-desc" <?php echo ($sort == 'price-desc') ? 'selected' : ''; ?>>High To Low</option>
+                                        <option value="name-asc" <?php echo ($sort == 'name-asc') ? 'selected' : ''; ?>>Name A-Z</option>
+                                        <option value="name-desc" <?php echo ($sort == 'name-desc') ? 'selected' : ''; ?>>Name Z-A</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <?php if ($result->num_rows > 0): ?>
+                            <?php while ($row = $result->fetch_assoc()): 
+                                $availableSizes = [];
+                                $availableColors = [];
+                                
+                                // Fetch available sizes
+                                $size_sql = "SELECT DISTINCT s.size_id, s.size_name 
+                                             FROM product_variants pv 
+                                             JOIN sizes s ON pv.size_id = s.size_id 
+                                             WHERE pv.product_id = {$row['product_id']}";
+                                $size_result = $conn->query($size_sql);
+                                while ($size = $size_result->fetch_assoc()) {
+                                    $availableSizes[] = $size['size_name'];
+                                }
+
+                                // Fetch available colors
+                                $color_sql = "SELECT DISTINCT c.color_id, c.color_name, c.color_code 
+                                              FROM product_variants pv 
+                                              JOIN colors c ON pv.color_id = c.color_id 
+                                              WHERE pv.product_id = {$row['product_id']}";
+                                $color_result = $conn->query($color_sql);
+                                while ($color = $color_result->fetch_assoc()) {
+                                    $availableColors[] = $color['color_name'];
+                                }
+
+                                $productData = [
+                                    'id' => $row['product_id'],
+                                    'name' => $row['product_name'],
+                                    'price' => $row['price'],
+                                    'sale_price' => $row['sale_price'],
+                                    'availableSizes' => $availableSizes,
+                                    'availableColors' => $availableColors,
+                                    'image' => $row['product_image']
+                                ];
+                                $productDataJson = htmlspecialchars(json_encode($productData), ENT_QUOTES, 'UTF-8');
+                            ?>
+                                <div class="col-lg-4 col-md-6 col-sm-6">
+                                    <div class="product__item">
+                                        <div class="product__item__pic set-bg" data-setbg="<?php echo htmlspecialchars($row['product_image']); ?>">
+                                            <ul class="product__hover">
+                                                <li><a href="#"><img src="assets/img/icon/heart.png" alt=""></a></li>
+                                                <li><a href="#"><img src="assets/img/icon/compare.png" alt=""> <span>Compare</span></a></li>
+                                                <li><a href="shop-details.php?id=<?php echo htmlspecialchars($row['product_id']); ?>"><img src="assets/img/icon/search.png" alt=""></a></li>
+                                            </ul>
+                                        </div>
+                                        <div class="product__item__text">
+                                            <h6><?php echo htmlspecialchars($row['product_name']); ?></h6>
+                                            <a href="javascript:void(0)" class="add-cart" onclick="addToCartFromData('<?php echo $productDataJson; ?>')">
+                        Thêm vào giỏ hàng
+                    </a>
+                                            <div class="rating">
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                                <i class="fa fa-star-o"></i>
+                                            </div>
+                                            <?php if ($row['sale_price']): ?>
+                                                <h5 style="text-decoration: line-through;"><?php echo number_format($row['price']); ?>đ</h5>
+                                                <h5 class="sale-price" style="color: red;"><?php echo number_format($row['sale_price']); ?>đ</h5>
+                                            <?php else: ?>
+                                                <h5><?php echo number_format($row['price']); ?>đ</h5>
+                                            <?php endif; ?>
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <p>Không có sản phẩm nào.</p>
+                        <?php endif; ?>
+                    </div>
+                    <!-- Phân trang có thể được thêm vào đây -->
+                </div>
             </div>
-        </form>
-    </section>
+        </div>
+    </form>
+</section>
     <!-- Shop Section End -->
 
     <!-- Footer Section Begin -->

@@ -3,20 +3,42 @@ include 'includes/db_connect.php'; // Kết nối cơ sở dữ liệu
 
 session_start();
 
-// Lấy ID sản phẩm từ URL
-$product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+// Lấy product_id từ URL
+$product_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 // Truy vấn để lấy thông tin sản phẩm
-$sql = "SELECT * FROM products WHERE product_id = $product_id";
-$result = $conn->query($sql);
+$productQuery = "SELECT p.*, c.category_name, b.brand_name 
+                 FROM products p
+                 LEFT JOIN categories c ON p.category_id = c.category_id
+                 LEFT JOIN brands b ON p.brand_id = b.brand_id
+                 WHERE p.product_id = ?";
+$stmt = $conn->prepare($productQuery);
+$stmt->bind_param("i", $product_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$product = $result->fetch_assoc();
 
-// Kiểm tra xem sản phẩm có tồn tại không
-if ($result->num_rows > 0) {
-    $product = $result->fetch_assoc();
-} else {
-    echo "Sản phẩm không tồn tại.";
-    exit;
+if (!$product) {
+    die("Sản phẩm không tồn tại");
 }
+
+// Truy vấn để lấy các biến thể của sản phẩm
+$variantQuery = "SELECT pv.*, s.size_name, c.color_name, c.color_code 
+                 FROM product_variants pv
+                 LEFT JOIN sizes s ON pv.size_id = s.size_id
+                 LEFT JOIN colors c ON pv.color_id = c.color_id
+                 WHERE pv.product_id = ?";
+$stmt = $conn->prepare($variantQuery);
+$stmt->bind_param("i", $product_id);
+$stmt->execute();
+$variantResult = $stmt->get_result();
+$variants = $variantResult->fetch_all(MYSQLI_ASSOC);
+
+// Tạo mảng các kích thước và màu sắc duy nhất
+$sizes = array_unique(array_column($variants, 'size_name'));
+$colors = array_unique(array_column($variants, 'color_name'));
+
+
 ?>
 <!DOCTYPE html>
 <html lang="zxx">
@@ -95,104 +117,103 @@ if ($result->num_rows > 0) {
         <div class="product__details__content">
             <div class="container">
                 <div class="row d-flex justify-content-center">
-                    <div class="col-lg-8">
-                        <div class="product__details__text">
-                            <h4><?php echo $product['product_name']; ?></h4>
-                            <div class="rating">
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star-o"></i>
-                                <span> - 5 Reviews</span>
-                            </div>
-                            <h3>$<?php echo number_format($product['price'], 2); ?>
-                                <span>$<?php echo number_format($product['sale_price'], 2); ?></span>
-                            </h3>
-                            <p><?php echo $product['description']; ?></p>
-                            <div class="product__details__option">
+                <div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="product__details__pic">
+                <div class="product__details__pic__item">
+                    <img class="product__details__pic__item--large"
+                        src="<?php echo htmlspecialchars($product['product_image']); ?>" alt="<?php echo htmlspecialchars($product['product_name']); ?>">
+                </div>
+                <div class="product__details__pic__slider owl-carousel">
+                    <?php foreach ($images as $image): ?>
+                        <img data-imgbigurl="<?php echo htmlspecialchars($image['image_url']); ?>"
+                            src="<?php echo htmlspecialchars($image['image_url']); ?>" alt="<?php echo htmlspecialchars($product['product_name']); ?>">
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="product__details__text">
+                <h4><?php echo htmlspecialchars($product['product_name']); ?></h4>
+                <div class="rating">
+                    <i class="fa fa-star"></i>
+                    <i class="fa fa-star"></i>
+                    <i class="fa fa-star"></i>
+                    <i class="fa fa-star"></i>
+                    <i class="fa fa-star-o"></i>
+                    <span> - 5 Reviews</span>
+                </div>
+                <h3><?php echo number_format($product['sale_price'], 0, ',', '.'); ?>đ
+                    <?php if ($product['price'] > $product['sale_price']): ?>
+                        <span><?php echo number_format($product['price'], 0, ',', '.'); ?>đ</span>
+                    <?php endif; ?>
+                </h3>
+                <p><?php echo htmlspecialchars($product['description']); ?></p>
+                <div class="product__details__option">
+                    <div class="product__details__option__size">
+                        <span>Kích thước:</span>
+                        <?php foreach ($sizes as $size): ?>
+                            <label for="<?php echo htmlspecialchars($size); ?>">
+                                <input type="radio" id="<?php echo htmlspecialchars($size); ?>"
+                                       name="size" value="<?php echo htmlspecialchars($size); ?>">
+                                <?php echo htmlspecialchars($size); ?>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
 
-                                <?php
-                                include './includes/db_connect.php'; 
-                                
-                                // Truy vấn để lấy danh sách kích thước và màu sắc
-                                $sizeQuery = "SELECT * FROM sizes";
-                                $colorQuery = "SELECT * FROM colors";
-
-                                $sizeResult = $conn->query($sizeQuery);
-                                $colorResult = $conn->query($colorQuery);
-
-                                // Lưu kích thước vào mảng
-                                $sizes = $sizeResult->num_rows > 0 ? $sizeResult->fetch_all(MYSQLI_ASSOC) : [];
-
-                                // Lưu màu sắc vào mảng
-                                $colors = $colorResult->num_rows > 0 ? $colorResult->fetch_all(MYSQLI_ASSOC) : [];
-                                ?>
-
-                                <div class="product__details__option">
-                                    <div class="product__details__option__size">
-                                        <span>Kích thước:</span>
-                                        <?php foreach ($sizes as $size): ?>
-                                            <label for="<?php echo htmlspecialchars($size['size_name']); ?>">
-                                                <input type="radio" id="<?php echo htmlspecialchars($size['size_name']); ?>"
-                                                    name="size" value="<?php echo htmlspecialchars($size['size_name']); ?>">
-                                                <?php echo htmlspecialchars($size['size_name']); ?>
-                                            </label>
-                                        <?php endforeach; ?>
-                                    </div>
-
-                                    <div class="product__details__option__color">
-                                        <span>Màu sắc:</span>
-                                        <?php foreach ($colors as $color): ?>
-                                            <label class="c-<?php echo $color['color_id']; ?>"
-                                                for="color-<?php echo $color['color_id']; ?>"
-                                                style="background-color: <?php echo htmlspecialchars($color['color_code']); ?>">
-                                                <input type="radio" id="color-<?php echo $color['color_id']; ?>"
-                                                    name="color"
-                                                    value="<?php echo htmlspecialchars($color['color_name']); ?>"
-                                                    onclick="setActiveColor(this)">
-                                            </label>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-
-                            </div>
-                            <div class="product__details__cart__option">
-                                <div class="quantity">
-                                    <div class="pro-qty">
-                                        <input type="text" value="1">
-                                    </div>
-                                </div>
-                                <a href="javascript:void(0)" class="primary-btn"
-                                    data-product-id="<?php echo $product['product_id']; ?>"
-                                    data-product-name="<?php echo htmlspecialchars($product['product_name']); ?>"
-                                    data-product-price="<?php echo $product['price']; ?>" onclick="addToCart(
-                                        '<?php echo $product['product_id']; ?>',
-                                        '<?php echo addslashes($product['product_name']); ?>',
-                                        <?php echo $product['price']; ?>, 
-                                        parseInt(document.querySelector('.pro-qty input').value),  
-                                        document.querySelector('input[name=size]:checked').value,  
-                                        document.querySelector('input[name=color]:checked').value  
-                                    )">
-                                    Thêm vào giỏ
-                                </a>
-
-                            </div>
-                            <div class="product__details__btns__option">
-                                <a href="#"><i class="fa fa-heart"></i> Thêm vào yêu thích</a>
-                                <a href="#"><i class="fa fa-exchange"></i> So sánh</a>
-                            </div>
-                            <div class="product__details__last__option">
-                                <h5><span>Guaranteed Safe Checkout</span></h5>
-                                <img src="img/shop-details/details-payment.png" alt="">
-                                <ul>
-                                    <li><span>SKU:</span> 3812912</li>
-                                    <li><span>Categories:</span> Clothes</li>
-                                    <li><span>Tag:</span> Clothes, Skin, Body</li>
-                                </ul>
-                            </div>
+                    <div class="product__details__option__color">
+                        <span>Màu sắc:</span>
+                        <?php foreach ($colors as $index => $color): 
+                            $colorCode = array_values(array_filter($variants, function($v) use ($color) {
+                                return $v['color_name'] == $color;
+                            }))[0]['color_code'];
+                        ?>
+                            <label class="c-<?php echo $index; ?>"
+                                   for="color-<?php echo $index; ?>"
+                                   style="background-color: <?php echo htmlspecialchars($colorCode); ?>">
+                                <input type="radio" id="color-<?php echo $index; ?>"
+                                       name="color"
+                                       value="<?php echo htmlspecialchars($color); ?>"
+                                       onclick="setActiveColor(this)">
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <div class="product__details__cart__option">
+                    <div class="quantity">
+                        <div class="pro-qty">
+                            <input type="text" value="1" id="quantity">
                         </div>
                     </div>
+                    <a href="javascript:void(0)" class="primary-btn" onclick="addToCartFromData('<?php echo htmlspecialchars(json_encode([
+                        'id' => $product['product_id'],
+                        'name' => $product['product_name'],
+                        'price' => $product['price'],
+                        'sale_price' => $product['sale_price'],
+                        'availableSizes' => $sizes,
+                        'availableColors' => $colors,
+                        'image' => 'assets/img/product/' . $product['product_image']
+                    ])); ?>', document.querySelector('input[name=\'size\']:checked').value, document.querySelector('input[name=\'color\']:checked').value, document.getElementById('quantity').value)">
+                        Thêm vào giỏ
+                    </a>
+                </div>
+                <div class="product__details__btns__option">
+                    <a href="#"><i class="fa fa-heart"></i> Thêm vào yêu thích</a>
+                    <a href="#"><i class="fa fa-exchange"></i> So sánh</a>
+                </div>
+                <div class="product__details__last__option">
+                    <h5><span>Guaranteed Safe Checkout</span></h5>
+                    <img src="img/shop-details/details-payment.png" alt="">
+                    <ul>
+                        <li><span>Danh mục:</span> <?php echo htmlspecialchars($product['category_name']); ?></li>
+                        <li><span>Thương hiệu:</span> <?php echo htmlspecialchars($product['brand_name']); ?></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
                 </div>
                 <div class="row">
                     <div class="col-lg-12">
