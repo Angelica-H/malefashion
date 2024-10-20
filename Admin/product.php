@@ -653,7 +653,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
                     <div class="widget-content-left mr-3">
                         <div class="widget-content-left">
                             <?php if (!empty($product['product_image'])): ?>
-                                <img width="40" class="rounded-circle" src="/<?php echo htmlspecialchars($product['product_image']); ?>" alt="">
+                                <img width="40" class="rounded-circle" src="../<?php echo htmlspecialchars($product['product_image']); ?>" alt="">
                             <?php else: ?>
                                 <img width="40" class="rounded-circle" src="/assets/images/avatars/4.jpg" alt="">
                             <?php endif; ?>

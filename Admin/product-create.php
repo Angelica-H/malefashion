@@ -53,29 +53,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Xử lý upload ảnh sản phẩm
         $product_image = null;
-        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
+        if (!empty($_FILES['product_image']['name'])) {
+            // Định nghĩa đường dẫn tương đối đến thư mục gốc của dự án
+            $project_root = dirname(__DIR__); // Đi lên một cấp từ thư mục Admin
+        
             $upload_dir = 'assets/img/product/';
-            $full_upload_dir = $_SERVER['DOCUMENT_ROOT'] . '/' . $upload_dir;
-            
-            // Đảm bảo thư mục tồn tại
+            $file_extension = pathinfo($_FILES['product_image']['name'], PATHINFO_EXTENSION);
+            $file_name = uniqid() . '.' . $file_extension;
+            $full_upload_dir = $project_root . '/' . $upload_dir;
+            $upload_file = $full_upload_dir . $file_name;
+        
             if (!file_exists($full_upload_dir)) {
                 mkdir($full_upload_dir, 0777, true);
             }
-            
-            // Tạo tên file duy nhất
-            $file_extension = pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION);
-            $file_name = uniqid() . '.' . $file_extension;
-            $upload_file = $full_upload_dir . $file_name;
-            
-            // Di chuyển file đã tải lên
-            if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $upload_file)) {
-                // Đường dẫn tương đối để lưu vào cơ sở dữ liệu
+        
+            if (move_uploaded_file($_FILES['product_image']['tmp_name'], $upload_file)) {
                 $product_image = $upload_dir . $file_name;
             } else {
-                throw new Exception("Xin lỗi, đã xảy ra lỗi khi tải lên tệp của bạn.");
+                throw new Exception("Không thể tải lên hình ảnh. Lỗi: " . error_get_last()['message']);
             }
         }
-        
+        // Ghi chú: Đoạn code này xử lý việc upload và lưu trữ hình ảnh sản phẩm.
+        // Nó tạo một tên file duy nhất, kiểm tra và tạo thư mục nếu cần,
+        // sau đó di chuyển file tạm thời vào vị trí lưu trữ cuối cùng.
+        // Nếu có lỗi trong quá trình upload, nó sẽ ném ra một ngoại lệ.
         // Thêm sản phẩm vào bảng products
         $sql = "INSERT INTO products (product_name, category_id, description, price, product_image, is_best_seller, is_new_arrival, is_hot_sale, sale_price, brand_id) 
                 VALUES (:product_name, :category_id, :description, :price, :product_image, :is_best_seller, :is_new_arrival, :is_hot_sale, :sale_price, :brand_id)";

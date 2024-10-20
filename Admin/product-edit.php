@@ -65,25 +65,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Xử lý tải lên hình ảnh
         if (!empty($_FILES['product_image']['name'])) {
+            // Định nghĩa đường dẫn tương đối đến thư mục gốc của dự án
+            $project_root = dirname(__DIR__); // Đi lên một cấp từ thư mục Admin
+        
             $upload_dir = 'assets/img/product/';
             $file_extension = pathinfo($_FILES['product_image']['name'], PATHINFO_EXTENSION);
             $file_name = uniqid() . '.' . $file_extension;
-            $upload_file = $_SERVER['DOCUMENT_ROOT'] . '/' . $upload_dir . $file_name;
-
-            if (!file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $upload_dir)) {
-                mkdir($_SERVER['DOCUMENT_ROOT'] . '/' . $upload_dir, 0777, true);
+            $full_upload_dir = $project_root . '/' . $upload_dir;
+            $upload_file = $full_upload_dir . $file_name;
+        
+            if (!file_exists($full_upload_dir)) {
+                mkdir($full_upload_dir, 0777, true);
             }
-
+        
             if (move_uploaded_file($_FILES['product_image']['tmp_name'], $upload_file)) {
                 // Xóa hình ảnh cũ nếu tồn tại
                 if (!empty($product['product_image'])) {
-                    $old_image_path = $_SERVER['DOCUMENT_ROOT'] . '/' . $product['product_image'];
+                    $old_image_path = $project_root . $product['product_image'];
                     if (file_exists($old_image_path)) {
                         unlink($old_image_path);
                     }
                 }
-
-                $relative_path = $upload_dir . $file_name;
+        
+                $relative_path =  $upload_dir . $file_name;
                 $stmt = $pdo->prepare("UPDATE products SET product_image = ? WHERE product_id = ?");
                 $stmt->execute([$relative_path, $product_id]);
             } else {
@@ -721,14 +725,14 @@ function generateSKU($product_name, $brand_name, $size_name, $color_name) {
             </div>
             <div class="col-md-9">
                 <div class="row">
-                    <div class="col-md-4">
-                        <?php if (!empty($product['product_image']) && file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $product['product_image'])): ?>
-                            <img src="/<?php echo htmlspecialchars($product['product_image']); ?>" alt="Current Product Image" class="img-fluid rounded mb-2">
-                        <?php else: ?>
-                            <p>No image available</p>
-                        <?php endif; ?>
-                        <input type="file" name="product_image" class="form-control-file">
-                    </div>
+                <div class="col-md-4">
+                    <?php if (!empty($product['product_image'])): ?>
+                        <img src="../<?php echo htmlspecialchars($product['product_image']); ?>" alt="Current Product Image" class="img-fluid rounded mb-2">
+                    <?php else: ?>
+                        <p>No image available</p>
+                    <?php endif; ?>
+                    <input type="file" name="product_image" class="form-control-file">
+                </div>
                 </div>
             </div>
         </div>

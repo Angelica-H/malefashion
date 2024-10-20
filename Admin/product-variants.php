@@ -1,53 +1,57 @@
 <?php
-require 'process/config.php';
-require 'process/check_admin_session.php';
-checkAdminSession();
+ require 'process/config.php';
+ require 'process/check_admin_session.php';
+ checkAdminSession();
+ // Xử lý tìm kiếm, sắp xếp và phân trang
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+$sort = isset($_GET['sort']) ? $_GET['sort'] : 'product_id';
+$order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit = 10; // Số sản phẩm trên mỗi trang
+$offset = ($page - 1) * $limit;
 
-// Kiểm tra xem có ID sản phẩm được truyền vào không
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header("Location: product.php");
-    exit();
-}
+// Xây dựng câu truy vấn
+$query = "SELECT p.*, b.brand_name, c.category_name, 
+          (SELECT SUM(stock) FROM product_variants WHERE product_id = p.product_id) as total_stock
+          FROM products p
+          LEFT JOIN brands b ON p.brand_id = b.brand_id
+          LEFT JOIN categories c ON p.category_id = c.category_id
+          WHERE p.product_name LIKE :search OR b.brand_name LIKE :search
+          ORDER BY $sort $order
+          LIMIT :limit OFFSET :offset";
 
-$product_id = intval($_GET['id']);
+$countQuery = "SELECT COUNT(*) FROM products p
+               LEFT JOIN brands b ON p.brand_id = b.brand_id
+               WHERE p.product_name LIKE :search OR b.brand_name LIKE :search";
 
-try {
-    // Truy vấn thông tin sản phẩm
-    $query = "SELECT p.*, b.brand_name, c.category_name,
-              (SELECT SUM(s.stock) FROM sku s WHERE s.product_id = p.product_id) as total_stock
-              FROM products p
-              LEFT JOIN brands b ON p.brand_id = b.brand_id
-              LEFT JOIN categories c ON p.category_id = c.category_id
-              WHERE p.product_id = :product_id";
+$stmt = $pdo->prepare($query);
+$countStmt = $pdo->prepare($countQuery);
 
-    $stmt = $pdo->prepare($query);
-    $stmt->execute(['product_id' => $product_id]);
-    $product = $stmt->fetch(PDO::FETCH_ASSOC);
+$searchParam = "%$search%";
+$stmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
+$stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+$stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+$countStmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
 
-    if (!$product) {
-        throw new Exception("Sản phẩm không tồn tại");
+$stmt->execute();
+$countStmt->execute();
+
+$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$totalProducts = $countStmt->fetchColumn();
+$totalPages = ceil($totalProducts / $limit);
+
+// Xử lý xóa sản phẩm
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
+    $productId = $_POST['id'];
+    $deleteStmt = $pdo->prepare("DELETE FROM products WHERE product_id = ?");
+    if ($deleteStmt->execute([$productId])) {
+        // Chuyển hướng để tránh gửi lại form khi refresh
+        header("Location: product.php?deleted=1");
+        exit;
     }
-
-    // Lấy các biến thể và SKU của sản phẩm
-    $variantQuery = "SELECT pv.*, s.size_name, c.color_name, sk.sku_code, sk.stock, sk.price
-                     FROM product_variants pv
-                     LEFT JOIN sizes s ON pv.size_id = s.size_id
-                     LEFT JOIN colors c ON pv.color_id = c.color_id
-                     LEFT JOIN sku sk ON pv.variant_id = sk.variant_id
-                     WHERE pv.product_id = :product_id";
-    $variantStmt = $pdo->prepare($variantQuery);
-    $variantStmt->execute(['product_id' => $product_id]);
-    $variants = $variantStmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (Exception $e) {
-    // Log lỗi
-    error_log($e->getMessage());
-    // Chuyển hướng về trang danh sách sản phẩm với thông báo lỗi
-    header("Location: product.php?error=" . urlencode($e->getMessage()));
-    exit();
 }
 ?>
-
+?>
  <!doctype html>
 <html lang="en">
 
@@ -551,7 +555,6 @@ try {
 
                 <!-- Main -->
                 <div class="app-main__inner">
-
                     <div class="app-page-title">
                         <div class="page-title-wrapper">
                             <div class="page-title-heading">
@@ -565,148 +568,137 @@ try {
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="page-title-actions">
+                                <a href="./product-create.php
+" class="btn-shadow btn-hover-shine mr-3 btn btn-primary">
+                                    <span class="btn-icon-wrapper pr-2 opacity-7">
+                                        <i class="fa fa-plus fa-w-20"></i>
+                                    </span>
+                                    Create
+                                </a>
+                            </div>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-12">
                         <div class="main-card mb-3 card">
-                        <div class="card-body">
-    <h5 class="card-title mb-4">Product Details</h5>
+    <div class="card-header">
+        <form action="" method="GET">
+            <div class="input-group">
+                <input type="search" name="search" id="search"
+                    placeholder="Tìm kiếm sản phẩm" class="form-control" 
+                    value="<?php echo htmlspecialchars($search); ?>">
+                <span class="input-group-append">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-search"></i>&nbsp;
+                        Tìm kiếm
+                    </button>
+                </span>
+            </div>
+        </form>
 
-    <div class="row mb-4">
-        <div class="col-md-3 text-md-right">
-            <strong>Image:</strong>
-        </div>
-        <div class="col-md-9">
-            <div class="row">
-                <div class="col-md-4">
-                    <?php if (!empty($product['product_image'])): ?>
-                        <img src="../<?php echo htmlspecialchars($product['product_image']); ?>" alt="Product Image" class="img-fluid rounded">
-                    <?php else: ?>
-                        <p>No image available</p>
-                    <?php endif; ?>
-                </div>
+        <div class="btn-actions-pane-right">
+            <div role="group" class="btn-group-sm btn-group">
+                <a href="?sort=created_at&order=<?php echo $sort == 'created_at' && $order == 'DESC' ? 'ASC' : 'DESC'; ?>" 
+                   class="btn btn-focus">Sắp xếp theo Ngày</a>
+                <a href="?sort=price&order=<?php echo $sort == 'price' && $order == 'DESC' ? 'ASC' : 'DESC'; ?>" 
+                   class="btn btn-focus">Sắp xếp theo Giá</a>
+                <a href="?sort=product_name&order=<?php echo $sort == 'product_name' && $order == 'DESC' ? 'ASC' : 'DESC'; ?>" 
+                   class="btn btn-focus">Sắp xếp theo Tên</a>
             </div>
         </div>
     </div>
 
-    <div class="row mb-3">
-        <div class="col-md-3 text-md-right">
-            <strong>Brand:</strong>
-        </div>
-        <div class="col-md-9">
-            <p class="mb-0"><?php echo htmlspecialchars($product['brand_name']); ?></p>
-        </div>
-    </div>
-
-    <div class="row mb-3">
-        <div class="col-md-3 text-md-right">
-            <strong>Category:</strong>
-        </div>
-        <div class="col-md-9">
-            <p class="mb-0"><?php echo htmlspecialchars($product['category_name']); ?></p>
-        </div>
-    </div>
-
-    <div class="row mb-3">
-        <div class="col-md-3 text-md-right">
-            <strong>Name:</strong>
-        </div>
-        <div class="col-md-9">
-            <p class="mb-0"><?php echo htmlspecialchars($product['product_name']); ?></p>
-        </div>
-    </div>
-
-    <div class="row mb-3">
-        <div class="col-md-3 text-md-right">
-            <strong>Description:</strong>
-        </div>
-        <div class="col-md-9">
-            <p class="mb-0"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
-        </div>
-    </div>
-
-    <div class="row mb-3">
-        <div class="col-md-3 text-md-right">
-            <strong>Price:</strong>
-        </div>
-        <div class="col-md-9">
-            <p class="mb-0"><?php echo number_format($product['price'], 0, ',', '.'); ?> đ</p>
-        </div>
-    </div>
-
-    <div class="row mb-3">
-        <div class="col-md-3 text-md-right">
-            <strong>Sale Price:</strong>
-        </div>
-        <div class="col-md-9">
-            <p class="mb-0"><?php echo $product['sale_price'] ? number_format($product['sale_price'], 0, ',', '.') . ' đ' : 'No sale price'; ?></p>
-        </div>
-    </div>
-
-    <div class="row mb-3">
-        <div class="col-md-3 text-md-right">
-            <strong>Total Stock:</strong>
-        </div>
-        <div class="col-md-9">
-            <p class="mb-0"><?php echo $product['total_stock']; ?></p>
-        </div>
-    </div>
-
-    <div class="row mb-3">
-        <div class="col-md-3 text-md-right">
-            <strong>Featured:</strong>
-        </div>
-        <div class="col-md-9">
-            <p class="mb-0">
-                <span class="badge <?php echo $product['is_best_seller'] ? 'badge-success' : 'badge-secondary'; ?>">Best Seller</span>
-                <span class="badge <?php echo $product['is_new_arrival'] ? 'badge-info' : 'badge-secondary'; ?>">New Arrival</span>
-                <span class="badge <?php echo $product['is_hot_sale'] ? 'badge-danger' : 'badge-secondary'; ?>">Hot Sale</span>
-            </p>
-        </div>
-    </div>
-
-    <div class="row mb-3">
-        <div class="col-md-3 text-md-right">
-            <strong>Created At:</strong>
-        </div>
-        <div class="col-md-9">
-            <p class="mb-0"><?php echo $product['created_at']; ?></p>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-3 text-md-right">
-            <strong>Variants and SKUs:</strong>
-        </div>
-        <div class="col-md-9">
-            <table class="table table-bordered table-striped">
-                <thead class="thead-light">
-                    <tr>                      
-                        <th>SKU Code</th>
-                        <th>Size</th>
-                        <th>Color</th>
-                        <th>Stock</th>
-                        <th>Price</th>
+    <div class="table-responsive">
+        <table class="align-middle mb-0 table table-borderless table-striped table-hover">
+            <thead>
+                <tr>
+                    <th class="text-center">ID</th>
+                    <th>Tên / Thương hiệu</th>
+                    <th class="text-center">Giá</th>
+                    <th class="text-center">Số lượng</th>
+                    <th class="text-center">Nổi bật</th>
+                    <th class="text-center">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($products as $product): ?>
+                    <tr>
+                        <td class="text-center text-muted">#<?php echo $product['product_id']; ?></td>
+                        <td>
+                            <div class="widget-content p-0">
+                                <div class="widget-content-wrapper">
+                                    <div class="widget-content-left mr-3">
+                                        <div class="widget-content-left">
+                                            <img style="height: 60px;"
+                                                data-toggle="tooltip" title="Hình ảnh"
+                                                data-placement="bottom"
+                                                src="<?php echo htmlspecialchars('/malefashion/' . $product['product_image']); ?>" alt="">
+                                        </div>
+                                    </div>
+                                    <div class="widget-content-left flex2">
+                                        <div class="widget-heading"><?php echo htmlspecialchars($product['product_name']); ?></div>
+                                        <div class="widget-subheading opacity-7">
+                                            <?php echo htmlspecialchars($product['brand_name']); ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center"><?php echo number_format($product['price'], 0, ',', '.'); ?> đ</td>
+                        <td class="text-center"><?php echo $product['total_stock']; ?></td>
+                        <td class="text-center">
+                            <div class="badge badge-<?php echo $product['is_best_seller'] ? 'success' : 'secondary'; ?> mt-2">
+                                <?php echo $product['is_best_seller'] ? 'Có' : 'Không'; ?>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <a href="./product-show.php?id=<?php echo $product['product_id']; ?>"
+                                class="btn btn-hover-shine btn-outline-primary border-0 btn-sm">
+                                Chi tiết
+                            </a>
+                            <a href="./product-edit.php?id=<?php echo $product['product_id']; ?>" data-toggle="tooltip" title="Sửa"
+                                data-placement="bottom" class="btn btn-outline-warning border-0 btn-sm">
+                                <span class="btn-icon-wrapper opacity-8">
+                                    <i class="fa fa-edit fa-w-20"></i>
+                                </span>
+                            </a>
+                            <form class="d-inline" action="" method="post">
+                                <input type="hidden" name="id" value="<?php echo $product['product_id']; ?>">
+                                <button class="btn btn-hover-shine btn-outline-danger border-0 btn-sm"
+                                    type="submit" data-toggle="tooltip" title="Xóa"
+                                    data-placement="bottom"
+                                    onclick="return confirm('Bạn có chắc chắn muốn xóa mục này?')">
+                                    <span class="btn-icon-wrapper opacity-8">
+                                        <i class="fa fa-trash fa-w-20"></i>
+                                    </span>
+                                </button>
+                            </form>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($variants as $variant): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($variant['sku_code']); ?></td>
-                            <td><?php echo htmlspecialchars($variant['size_name']); ?></td>
-                            <td><?php echo htmlspecialchars($variant['color_name']); ?></td>
-                            <td><?php echo $variant['stock']; ?></td>
-                            <td><?php echo number_format($variant['price'], 0, ',', '.'); ?> đ</td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
-</div>
-</div>
+
+    <div class="d-block card-footer">
+        <nav aria-label="Phân trang">
+            <ul class="pagination justify-content-center">
+                <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>">Trước</a>
+                </li>
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                    <li class="page-item <?php echo $page == $i ? 'active' : ''; ?>">
+                        <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>"><?php echo $i; ?></a>
+                    </li>
+                <?php endfor; ?>
+                <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>">Sau</a>
+                </li>
+            </ul>
+        </nav>
     </div>
 </div>
                         </div>
@@ -1882,7 +1874,7 @@ try {
         </div>
     </div>
     <div class="app-drawer-overlay d-none animated fadeIn"></div>
-
+    
     <script src="assets/scripts/jquery-3.2.1.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
