@@ -1,42 +1,51 @@
 <?php
- require 'process/config.php';
- require 'process/check_admin_session.php';
- checkAdminSession();
- // Kiểm tra xem có ID sản phẩm được truyền vào không
+require 'process/config.php';
+require 'process/check_admin_session.php';
+checkAdminSession();
+
+// Kiểm tra xem có ID sản phẩm được truyền vào không
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header("Location: product.php");
     exit();
 }
 
-$product_id = $_GET['id'];
+$product_id = intval($_GET['id']);
 
-// Truy vấn thông tin sản phẩm
-$query = "SELECT p.*, b.brand_name, c.category_name,
-          (SELECT SUM(stock) FROM product_variants WHERE product_id = p.product_id) as total_stock
-          FROM products p
-          LEFT JOIN brands b ON p.brand_id = b.brand_id
-          LEFT JOIN categories c ON p.category_id = c.category_id
-          WHERE p.product_id = :product_id";
+try {
+    // Truy vấn thông tin sản phẩm
+    $query = "SELECT p.*, b.brand_name, c.category_name,
+              (SELECT SUM(s.stock) FROM sku s WHERE s.product_id = p.product_id) as total_stock
+              FROM products p
+              LEFT JOIN brands b ON p.brand_id = b.brand_id
+              LEFT JOIN categories c ON p.category_id = c.category_id
+              WHERE p.product_id = :product_id";
 
-$stmt = $pdo->prepare($query);
-$stmt->execute(['product_id' => $product_id]);
-$product = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = $pdo->prepare($query);
+    $stmt->execute(['product_id' => $product_id]);
+    $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$product) {
-    header("Location: product.php");
+    if (!$product) {
+        throw new Exception("Sản phẩm không tồn tại");
+    }
+
+    // Lấy các biến thể và SKU của sản phẩm
+    $variantQuery = "SELECT pv.*, s.size_name, c.color_name, sk.sku_code, sk.stock, sk.price
+                     FROM product_variants pv
+                     LEFT JOIN sizes s ON pv.size_id = s.size_id
+                     LEFT JOIN colors c ON pv.color_id = c.color_id
+                     LEFT JOIN sku sk ON pv.variant_id = sk.variant_id
+                     WHERE pv.product_id = :product_id";
+    $variantStmt = $pdo->prepare($variantQuery);
+    $variantStmt->execute(['product_id' => $product_id]);
+    $variants = $variantStmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (Exception $e) {
+    // Log lỗi
+    error_log($e->getMessage());
+    // Chuyển hướng về trang danh sách sản phẩm với thông báo lỗi
+    header("Location: product.php?error=" . urlencode($e->getMessage()));
     exit();
 }
-
-// Lấy các biến thể của sản phẩm
-$variantQuery = "SELECT pv.*, s.size_name, c.color_name
-                 FROM product_variants pv
-                 LEFT JOIN sizes s ON pv.size_id = s.size_id
-                 LEFT JOIN colors c ON pv.color_id = c.color_id
-                 WHERE pv.product_id = :product_id";
-$variantStmt = $pdo->prepare($variantQuery);
-$variantStmt->execute(['product_id' => $product_id]);
-$variants = $variantStmt->fetchAll(PDO::FETCH_ASSOC);
-
 ?>
 
  <!doctype html>
@@ -562,135 +571,141 @@ $variants = $variantStmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="row">
                         <div class="col-md-12">
                         <div class="main-card mb-3 card">
-    <div class="card-body">
-        <h5 class="card-title mb-4">Product Details</h5>
+                        <div class="card-body">
+    <h5 class="card-title mb-4">Product Details</h5>
 
-        <div class="row mb-4">
-            <div class="col-md-3 text-md-right">
-                <strong>Images:</strong>
-            </div>
-            <div class="col-md-9">
-                <div class="row">
-                    <div class="col-md-4">
-                        <img src="<?php echo htmlspecialchars('../' . $product['product_image']); ?>" alt="Product Image" class="img-fluid rounded">
-                    </div>
+    <div class="row mb-4">
+        <div class="col-md-3 text-md-right">
+            <strong>Image:</strong>
+        </div>
+        <div class="col-md-9">
+            <div class="row">
+                <div class="col-md-4">
+                    <?php if (!empty($product['product_image'])): ?>
+                        <img src="/<?php echo htmlspecialchars($product['product_image']); ?>" alt="Product Image" class="img-fluid rounded">
+                    <?php else: ?>
+                        <p>No image available</p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="row mb-3">
-            <div class="col-md-3 text-md-right">
-                <strong>Brand:</strong>
-            </div>
-            <div class="col-md-9">
-                <p class="mb-0"><?php echo htmlspecialchars($product['brand_name']); ?></p>
-            </div>
+    <div class="row mb-3">
+        <div class="col-md-3 text-md-right">
+            <strong>Brand:</strong>
         </div>
-
-        <div class="row mb-3">
-            <div class="col-md-3 text-md-right">
-                <strong>Category:</strong>
-            </div>
-            <div class="col-md-9">
-                <p class="mb-0"><?php echo htmlspecialchars($product['category_name']); ?></p>
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-md-3 text-md-right">
-                <strong>Name:</strong>
-            </div>
-            <div class="col-md-9">
-                <p class="mb-0"><?php echo htmlspecialchars($product['product_name']); ?></p>
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-md-3 text-md-right">
-                <strong>Description:</strong>
-            </div>
-            <div class="col-md-9">
-                <p class="mb-0"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-md-3 text-md-right">
-                <strong>Price:</strong>
-            </div>
-            <div class="col-md-9">
-                <p class="mb-0"><?php echo number_format($product['price']); ?> đ</p>
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-md-3 text-md-right">
-                <strong>Sale Price:</strong>
-            </div>
-            <div class="col-md-9">
-                <p class="mb-0"><?php echo $product['sale_price'] ? number_format($product['sale_price']) . ' đ' : 'No sale price'; ?></p>
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-md-3 text-md-right">
-                <strong>Total Stock:</strong>
-            </div>
-            <div class="col-md-9">
-                <p class="mb-0"><?php echo $product['total_stock']; ?></p>
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-md-3 text-md-right">
-                <strong>Featured:</strong>
-            </div>
-            <div class="col-md-9">
-                <p class="mb-0">
-                    <span class="badge <?php echo $product['is_best_seller'] ? 'badge-success' : 'badge-secondary'; ?>">Best Seller</span>
-                    <span class="badge <?php echo $product['is_new_arrival'] ? 'badge-info' : 'badge-secondary'; ?>">New Arrival</span>
-                    <span class="badge <?php echo $product['is_hot_sale'] ? 'badge-danger' : 'badge-secondary'; ?>">Hot Sale</span>
-                </p>
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-md-3 text-md-right">
-                <strong>Created At:</strong>
-            </div>
-            <div class="col-md-9">
-                <p class="mb-0"><?php echo $product['created_at']; ?></p>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-3 text-md-right">
-                <strong>Variants:</strong>
-            </div>
-            <div class="col-md-9">
-                <table class="table table-bordered table-striped">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>Size</th>
-                            <th>Color</th>
-                            <th>Stock</th>
-                            <th>Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($variants as $variant): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($variant['size_name']); ?></td>
-                                <td><?php echo htmlspecialchars($variant['color_name']); ?></td>
-                                <td><?php echo $variant['stock']; ?></td>
-                                <td><?php echo number_format($variant['price'], 2); ?> đ</td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+        <div class="col-md-9">
+            <p class="mb-0"><?php echo htmlspecialchars($product['brand_name']); ?></p>
         </div>
     </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3 text-md-right">
+            <strong>Category:</strong>
+        </div>
+        <div class="col-md-9">
+            <p class="mb-0"><?php echo htmlspecialchars($product['category_name']); ?></p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3 text-md-right">
+            <strong>Name:</strong>
+        </div>
+        <div class="col-md-9">
+            <p class="mb-0"><?php echo htmlspecialchars($product['product_name']); ?></p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3 text-md-right">
+            <strong>Description:</strong>
+        </div>
+        <div class="col-md-9">
+            <p class="mb-0"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3 text-md-right">
+            <strong>Price:</strong>
+        </div>
+        <div class="col-md-9">
+            <p class="mb-0"><?php echo number_format($product['price'], 0, ',', '.'); ?> đ</p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3 text-md-right">
+            <strong>Sale Price:</strong>
+        </div>
+        <div class="col-md-9">
+            <p class="mb-0"><?php echo $product['sale_price'] ? number_format($product['sale_price'], 0, ',', '.') . ' đ' : 'No sale price'; ?></p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3 text-md-right">
+            <strong>Total Stock:</strong>
+        </div>
+        <div class="col-md-9">
+            <p class="mb-0"><?php echo $product['total_stock']; ?></p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3 text-md-right">
+            <strong>Featured:</strong>
+        </div>
+        <div class="col-md-9">
+            <p class="mb-0">
+                <span class="badge <?php echo $product['is_best_seller'] ? 'badge-success' : 'badge-secondary'; ?>">Best Seller</span>
+                <span class="badge <?php echo $product['is_new_arrival'] ? 'badge-info' : 'badge-secondary'; ?>">New Arrival</span>
+                <span class="badge <?php echo $product['is_hot_sale'] ? 'badge-danger' : 'badge-secondary'; ?>">Hot Sale</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3 text-md-right">
+            <strong>Created At:</strong>
+        </div>
+        <div class="col-md-9">
+            <p class="mb-0"><?php echo $product['created_at']; ?></p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3 text-md-right">
+            <strong>Variants and SKUs:</strong>
+        </div>
+        <div class="col-md-9">
+            <table class="table table-bordered table-striped">
+                <thead class="thead-light">
+                    <tr>                      
+                        <th>SKU Code</th>
+                        <th>Size</th>
+                        <th>Color</th>
+                        <th>Stock</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($variants as $variant): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($variant['sku_code']); ?></td>
+                            <td><?php echo htmlspecialchars($variant['size_name']); ?></td>
+                            <td><?php echo htmlspecialchars($variant['color_name']); ?></td>
+                            <td><?php echo $variant['stock']; ?></td>
+                            <td><?php echo number_format($variant['price'], 0, ',', '.'); ?> đ</td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 </div>
     </div>
 </div>

@@ -1,8 +1,9 @@
 <?php
- require 'process/config.php';
- require 'process/check_admin_session.php';
- checkAdminSession();
- // Xử lý tìm kiếm, sắp xếp và phân trang
+require 'process/config.php';
+require 'process/check_admin_session.php';
+checkAdminSession();
+
+// Xử lý tìm kiếm, sắp xếp và phân trang
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'product_id';
 $order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
@@ -12,7 +13,7 @@ $offset = ($page - 1) * $limit;
 
 // Xây dựng câu truy vấn
 $query = "SELECT p.*, b.brand_name, c.category_name, 
-          (SELECT SUM(stock) FROM product_variants WHERE product_id = p.product_id) as total_stock
+          (SELECT SUM(s.stock) FROM sku s WHERE s.product_id = p.product_id) as total_stock
           FROM products p
           LEFT JOIN brands b ON p.brand_id = b.brand_id
           LEFT JOIN categories c ON p.category_id = c.category_id
@@ -43,14 +44,31 @@ $totalPages = ceil($totalProducts / $limit);
 // Xử lý xóa sản phẩm
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
     $productId = $_POST['id'];
-    $deleteStmt = $pdo->prepare("DELETE FROM products WHERE product_id = ?");
-    if ($deleteStmt->execute([$productId])) {
+    try {
+        $pdo->beginTransaction();
+
+        // Xóa các bản ghi liên quan trong bảng sku
+        $deleteSkuStmt = $pdo->prepare("DELETE FROM sku WHERE product_id = ?");
+        $deleteSkuStmt->execute([$productId]);
+
+        // Xóa các bản ghi liên quan trong bảng product_variants
+        $deleteVariantsStmt = $pdo->prepare("DELETE FROM product_variants WHERE product_id = ?");
+        $deleteVariantsStmt->execute([$productId]);
+
+        // Xóa sản phẩm
+        $deleteProductStmt = $pdo->prepare("DELETE FROM products WHERE product_id = ?");
+        $deleteProductStmt->execute([$productId]);
+
+        $pdo->commit();
         // Chuyển hướng để tránh gửi lại form khi refresh
         header("Location: product.php?deleted=1");
         exit;
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        // Xử lý lỗi ở đây, ví dụ: log lỗi hoặc hiển thị thông báo
+        $error = "Có lỗi xảy ra khi xóa sản phẩm: " . $e->getMessage();
     }
 }
-?>
 ?>
  <!doctype html>
 <html lang="en">
@@ -619,67 +637,80 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
                     <th>Tên / Thương hiệu</th>
                     <th class="text-center">Giá</th>
                     <th class="text-center">Số lượng</th>
-                    <th class="text-center">Nổi bật</th>
+                    <th class="text-center">Best Seller </th>
+                    <th class="text-center">New Arrival </th>
+                    <th class="text-center">Hot Sale</th>
                     <th class="text-center">Hành động</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($products as $product): ?>
-                    <tr>
-                        <td class="text-center text-muted">#<?php echo $product['product_id']; ?></td>
-                        <td>
-                            <div class="widget-content p-0">
-                                <div class="widget-content-wrapper">
-                                    <div class="widget-content-left mr-3">
-                                        <div class="widget-content-left">
-                                            <img style="height: 60px;"
-                                                data-toggle="tooltip" title="Hình ảnh"
-                                                data-placement="bottom"
-                                                src="<?php echo htmlspecialchars('/malefashion/' . $product['product_image']); ?>" alt="">
-                                        </div>
-                                    </div>
-                                    <div class="widget-content-left flex2">
-                                        <div class="widget-heading"><?php echo htmlspecialchars($product['product_name']); ?></div>
-                                        <div class="widget-subheading opacity-7">
-                                            <?php echo htmlspecialchars($product['brand_name']); ?>
-                                        </div>
-                                    </div>
-                                </div>
+    <?php foreach ($products as $product): ?>
+        <tr>
+            <td class="text-center text-muted">#<?php echo $product['product_id']; ?></td>
+            <td>
+                <div class="widget-content p-0">
+                    <div class="widget-content-wrapper">
+                    <div class="widget-content-left mr-3">
+                        <div class="widget-content-left">
+                            <?php if (!empty($product['product_image'])): ?>
+                                <img width="40" class="rounded-circle" src="/<?php echo htmlspecialchars($product['product_image']); ?>" alt="">
+                            <?php else: ?>
+                                <img width="40" class="rounded-circle" src="/assets/images/avatars/4.jpg" alt="">
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                        <div class="widget-content-left flex2">
+                            <div class="widget-heading"><?php echo htmlspecialchars($product['product_name']); ?></div>
+                            <div class="widget-subheading opacity-7">
+                                <?php echo htmlspecialchars($product['brand_name']); ?>
                             </div>
-                        </td>
-                        <td class="text-center"><?php echo number_format($product['price'], 0, ',', '.'); ?> đ</td>
-                        <td class="text-center"><?php echo $product['total_stock']; ?></td>
-                        <td class="text-center">
-                            <div class="badge badge-<?php echo $product['is_best_seller'] ? 'success' : 'secondary'; ?> mt-2">
-                                <?php echo $product['is_best_seller'] ? 'Có' : 'Không'; ?>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <a href="./product-show.php?id=<?php echo $product['product_id']; ?>"
-                                class="btn btn-hover-shine btn-outline-primary border-0 btn-sm">
-                                Chi tiết
-                            </a>
-                            <a href="./product-edit.php?id=<?php echo $product['product_id']; ?>" data-toggle="tooltip" title="Sửa"
-                                data-placement="bottom" class="btn btn-outline-warning border-0 btn-sm">
-                                <span class="btn-icon-wrapper opacity-8">
-                                    <i class="fa fa-edit fa-w-20"></i>
-                                </span>
-                            </a>
-                            <form class="d-inline" action="" method="post">
-                                <input type="hidden" name="id" value="<?php echo $product['product_id']; ?>">
-                                <button class="btn btn-hover-shine btn-outline-danger border-0 btn-sm"
-                                    type="submit" data-toggle="tooltip" title="Xóa"
-                                    data-placement="bottom"
-                                    onclick="return confirm('Bạn có chắc chắn muốn xóa mục này?')">
-                                    <span class="btn-icon-wrapper opacity-8">
-                                        <i class="fa fa-trash fa-w-20"></i>
-                                    </span>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td class="text-center"><?php echo number_format($product['price'], 0, ',', '.'); ?> đ</td>
+            <td class="text-center"><?php echo $product['total_stock']; ?></td>
+            <td class="text-center">
+                <div class="badge badge-<?php echo $product['is_best_seller'] ? 'success' : 'secondary'; ?> mt-2">
+                    <?php echo $product['is_best_seller'] ? 'Có' : 'Không'; ?>
+                </div>
+            </td>
+            <td class="text-center">
+                <div class="badge badge-<?php echo $product['is_new_arrival'] ? 'info' : 'secondary'; ?> mt-2">
+                    <?php echo $product['is_new_arrival'] ? 'Có' : 'Không'; ?>
+                </div>
+            </td>
+            <td class="text-center">
+                <div class="badge badge-<?php echo $product['is_hot_sale'] ? 'danger' : 'secondary'; ?> mt-2">
+                    <?php echo $product['is_hot_sale'] ? 'Có' : 'Không'; ?>
+                </div>
+            </td>
+            <td class="text-center">
+                <a href="./product-show.php?id=<?php echo $product['product_id']; ?>"
+                    class="btn btn-hover-shine btn-outline-primary border-0 btn-sm">
+                    Chi tiết
+                </a>
+                <a href="./product-edit.php?id=<?php echo $product['product_id']; ?>" data-toggle="tooltip" title="Sửa"
+                    data-placement="bottom" class="btn btn-outline-warning border-0 btn-sm">
+                    <span class="btn-icon-wrapper opacity-8">
+                        <i class="fa fa-edit fa-w-20"></i>
+                    </span>
+                </a>
+                <form class="d-inline" action="" method="post">
+                    <input type="hidden" name="id" value="<?php echo $product['product_id']; ?>">
+                    <button class="btn btn-hover-shine btn-outline-danger border-0 btn-sm"
+                        type="submit" data-toggle="tooltip" title="Xóa"
+                        data-placement="bottom"
+                        onclick="return confirm('Bạn có chắc chắn muốn xóa mục này?')">
+                        <span class="btn-icon-wrapper opacity-8">
+                            <i class="fa fa-trash fa-w-20"></i>
+                        </span>
+                    </button>
+                </form>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+</tbody>
         </table>
     </div>
 

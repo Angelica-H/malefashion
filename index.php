@@ -192,7 +192,7 @@ if ($result_all_products === false) {
         <div class="col-lg-3 col-md-6 col-sm-6 mix <?php echo $filterClassString; ?>">
             <div class="product__item">
                 <div class="product__item__pic set-bg"
-                    data-setbg="<?php echo htmlspecialchars($product['product_image']); ?>">
+                    data-setbg="/<?php echo htmlspecialchars($product['product_image']); ?>">
                     <?php if ($product['is_new_arrival']): ?>
                         <span class="label">New</span>
                     <?php elseif ($product['is_hot_sale']): ?>

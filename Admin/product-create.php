@@ -1,8 +1,9 @@
 <?php
- require 'process/config.php';
- require 'process/check_admin_session.php';
- checkAdminSession();
- // Lấy danh sách brands và categories từ database
+require 'process/config.php';
+require 'process/check_admin_session.php';
+checkAdminSession();
+
+// Lấy danh sách brands và categories từ database
 $stmt = $pdo->query("SELECT * FROM brands");
 $brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -14,6 +15,26 @@ $sizes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $stmt = $pdo->query("SELECT * FROM colors");
 $colors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+function generateSKU($product_name, $brand_name, $size_name, $color_name) {
+    // Lấy 3 ký tự đầu tiên của tên sản phẩm
+    $product_code = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $product_name), 0, 3));
+    
+    // Lấy 2 ký tự đầu tiên của tên thương hiệu
+    $brand_code = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $brand_name), 0, 2));
+    
+    // Lấy 1 ký tự đầu tiên của kích thước
+    $size_code = strtoupper(substr($size_name, 0, 1));
+    
+    // Lấy 2 ký tự đầu tiên của màu sắc
+    $color_code = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $color_name), 0, 2));
+    
+    // Tạo một số ngẫu nhiên 4 chữ số
+    $random_number = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+    
+    // Kết hợp tất cả để tạo mã SKU
+    return $product_code . $brand_code . $size_code . $color_code . $random_number;
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
@@ -32,29 +53,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Xử lý upload ảnh sản phẩm
         $product_image = null;
-        $product_image = null;
-if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
-    $target_dir = $_SERVER['DOCUMENT_ROOT'] . "/malefashion/assets/img/product/";
-    
-    // Đảm bảo thư mục tồn tại
-    if (!file_exists($target_dir)) {
-        mkdir($target_dir, 0777, true);
-    }
-    
-    // Tạo tên file duy nhất
-    $file_extension = pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION);
-    $file_name = uniqid() . '.' . $file_extension;
-    $target_file = $target_dir . $file_name;
-    
-    // Di chuyển file đã upload
-    if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) {
-        // Đường dẫn để lưu vào database (đường dẫn tương đối)
-        $product_image = "assets/img/product/" . $file_name;
-    } else {
-        $error = "Sorry, there was an error uploading your file.";
-    }
-}
-
+        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
+            $upload_dir = 'assets/img/product/';
+            $full_upload_dir = $_SERVER['DOCUMENT_ROOT'] . '/' . $upload_dir;
+            
+            // Đảm bảo thư mục tồn tại
+            if (!file_exists($full_upload_dir)) {
+                mkdir($full_upload_dir, 0777, true);
+            }
+            
+            // Tạo tên file duy nhất
+            $file_extension = pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION);
+            $file_name = uniqid() . '.' . $file_extension;
+            $upload_file = $full_upload_dir . $file_name;
+            
+            // Di chuyển file đã tải lên
+            if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $upload_file)) {
+                // Đường dẫn tương đối để lưu vào cơ sở dữ liệu
+                $product_image = $upload_dir . $file_name;
+            } else {
+                throw new Exception("Xin lỗi, đã xảy ra lỗi khi tải lên tệp của bạn.");
+            }
+        }
+        
         // Thêm sản phẩm vào bảng products
         $sql = "INSERT INTO products (product_name, category_id, description, price, product_image, is_best_seller, is_new_arrival, is_hot_sale, sale_price, brand_id) 
                 VALUES (:product_name, :category_id, :description, :price, :product_image, :is_best_seller, :is_new_arrival, :is_hot_sale, :sale_price, :brand_id)";
@@ -75,27 +96,56 @@ if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
 
         $product_id = $pdo->lastInsertId();
 
-        // Xử lý variants
+        // Lấy thông tin thương hiệu
+        $stmt_brand = $pdo->prepare("SELECT brand_name FROM brands WHERE brand_id = :brand_id");
+        $stmt_brand->execute([':brand_id' => $brand_id]);
+        $brand_name = $stmt_brand->fetchColumn();
+
+        // Xử lý variants và SKUs
         $size_ids = $_POST['size_id'];
         $color_ids = $_POST['color_id'];
         $stocks = $_POST['stock'];
         $variant_prices = $_POST['variant_price'];
 
-        $stmt = $pdo->prepare("INSERT INTO product_variants (product_id, size_id, color_id, stock, price) 
-                               VALUES (:product_id, :size_id, :color_id, :stock, :price)");
+        $stmt_variant = $pdo->prepare("INSERT INTO product_variants (product_id, size_id, color_id) 
+                                       VALUES (:product_id, :size_id, :color_id)");
+
+        $stmt_sku = $pdo->prepare("INSERT INTO sku (product_id, variant_id, sku_code, stock, price) 
+                                   VALUES (:product_id, :variant_id, :sku_code, :stock, :price)");
 
         for ($i = 0; $i < count($size_ids); $i++) {
-            $stmt->execute([
+            // Thêm variant
+            $stmt_variant->execute([
                 ':product_id' => $product_id,
                 ':size_id' => $size_ids[$i],
-                ':color_id' => $color_ids[$i],
+                ':color_id' => $color_ids[$i]
+            ]);
+            $variant_id = $pdo->lastInsertId();
+
+            // Lấy thông tin kích thước và màu sắc
+            $stmt_size = $pdo->prepare("SELECT size_name FROM sizes WHERE size_id = :size_id");
+            $stmt_size->execute([':size_id' => $size_ids[$i]]);
+            $size_name = $stmt_size->fetchColumn();
+
+            $stmt_color = $pdo->prepare("SELECT color_name FROM colors WHERE color_id = :color_id");
+            $stmt_color->execute([':color_id' => $color_ids[$i]]);
+            $color_name = $stmt_color->fetchColumn();
+
+            // Tạo mã SKU
+            $sku_code = generateSKU($product_name, $brand_name, $size_name, $color_name);
+
+            // Thêm SKU
+            $stmt_sku->execute([
+                ':product_id' => $product_id,
+                ':variant_id' => $variant_id,
+                ':sku_code' => $sku_code,
                 ':stock' => $stocks[$i],
                 ':price' => $variant_prices[$i]
             ]);
         }
 
         $pdo->commit();
-        $success = "Product and variants added successfully!";
+        $success = "Product, variants, and SKUs added successfully!";
     } catch (Exception $e) {
         $pdo->rollBack();
         $error = "Error: " . $e->getMessage();
@@ -626,101 +676,101 @@ if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
                     <div class="row">
                         <div class="col-md-12">
                         <div class="main-card mb-3 card">
-    <div class="card-body">
-        <h5 class="card-title">Create New Product</h5>
-        <?php if (isset($error)): ?>
-            <div class="alert alert-danger"><?php echo $error; ?></div>
-        <?php endif; ?>
-        <?php if (isset($success)): ?>
-            <div class="alert alert-success"><?php echo $success; ?></div>
-        <?php endif; ?>
+                        <div class="card-body">
+    <h5 class="card-title">Create New Product</h5>
+    <?php if (isset($error)): ?>
+        <div class="alert alert-danger"><?php echo $error; ?></div>
+    <?php endif; ?>
+    <?php if (isset($success)): ?>
+        <div class="alert alert-success"><?php echo $success; ?></div>
+    <?php endif; ?>
 
-        <form method="post" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="product_name">Product Name</label>
-                <input type="text" class="form-control" id="product_name" name="product_name" required>
-            </div>
-            <div class="form-group">
-                <label for="category_id">Category</label>
-                <select class="form-control" id="category_id" name="category_id" required>
-                    <?php foreach ($categories as $category): ?>
-                        <option value="<?php echo $category['category_id']; ?>"><?php echo htmlspecialchars($category['category_name']); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="brand_id">Brand</label>
-                <select class="form-control" id="brand_id" name="brand_id" required>
-                    <?php foreach ($brands as $brand): ?>
-                        <option value="<?php echo $brand['brand_id']; ?>"><?php echo htmlspecialchars($brand['brand_name']); ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="price">Price</label>
-                <input type="number" step="0.01" class="form-control" id="price" name="price" required>
-            </div>
-            <div class="form-group">
-                <label for="sale_price">Sale Price (optional)</label>
-                <input type="number" step="0.01" class="form-control" id="sale_price" name="sale_price">
-            </div>
-            <div class="form-group">
-                <label for="product_image">Product Image</label>
-                <input type="file" class="form-control-file" id="product_image" name="product_image">
-            </div>
-            <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="is_best_seller" name="is_best_seller">
-                <label class="form-check-label" for="is_best_seller">Best Seller</label>
-            </div>
-            <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="is_new_arrival" name="is_new_arrival">
-                <label class="form-check-label" for="is_new_arrival">New Arrival</label>
-            </div>
-            <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="is_hot_sale" name="is_hot_sale">
-                <label class="form-check-label" for="is_hot_sale">Hot Sale</label>
-            </div>
+    <form method="post" enctype="multipart/form-data">
+        <!-- Giữ nguyên các trường thông tin sản phẩm chung -->
+        <div class="form-group">
+            <label for="product_name">Product Name</label>
+            <input type="text" class="form-control" id="product_name" name="product_name" required>
+        </div>
+        <div class="form-group">
+            <label for="category_id">Category</label>
+            <select class="form-control" id="category_id" name="category_id" required>
+                <?php foreach ($categories as $category): ?>
+                    <option value="<?php echo $category['category_id']; ?>"><?php echo htmlspecialchars($category['category_name']); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="brand_id">Brand</label>
+            <select class="form-control" id="brand_id" name="brand_id" required>
+                <?php foreach ($brands as $brand): ?>
+                    <option value="<?php echo $brand['brand_id']; ?>"><?php echo htmlspecialchars($brand['brand_name']); ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="price">Base Price</label>
+            <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+        </div>
+        <div class="form-group">
+            <label for="sale_price">Sale Price (optional)</label>
+            <input type="number" step="0.01" class="form-control" id="sale_price" name="sale_price">
+        </div>
+        <div class="form-group">
+            <label for="product_image">Product Image</label>
+            <input type="file" class="form-control-file" id="product_image" name="product_image">
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="is_best_seller" name="is_best_seller">
+            <label class="form-check-label" for="is_best_seller">Best Seller</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="is_new_arrival" name="is_new_arrival">
+            <label class="form-check-label" for="is_new_arrival">New Arrival</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="is_hot_sale" name="is_hot_sale">
+            <label class="form-check-label" for="is_hot_sale">Hot Sale</label>
+        </div>
 
-            <h5 class="mt-4">Product Variants</h5>
-            <div id="variants-container">
-                <div class="variant-entry mb-3">
-                    <div class="form-row">
-                        <div class="col">
-                            <select name="size_id[]" class="form-control" required>
-                                <option value="">Select Size</option>
-                                <?php foreach ($sizes as $size): ?>
-                                    <option value="<?php echo $size['size_id']; ?>"><?php echo htmlspecialchars($size['size_name']); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col">
-                            <select name="color_id[]" class="form-control" required>
-                                <option value="">Select Color</option>
-                                <?php foreach ($colors as $color): ?>
-                                    <option value="<?php echo $color['color_id']; ?>"><?php echo htmlspecialchars($color['color_name']); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col">
-                            <input type="number" name="stock[]" class="form-control" placeholder="Stock" required>
-                        </div>
-                        <div class="col">
-                            <input type="number" step="0.01" name="variant_price[]" class="form-control" placeholder="Price" required>
-                        </div>
+        <h5 class="mt-4">Product Variants</h5>
+        <div id="variants-container">
+            <div class="variant-entry mb-3">
+                <div class="form-row">
+                    <div class="col">
+                        <select name="size_id[]" class="form-control" required>
+                            <option value="">Select Size</option>
+                            <?php foreach ($sizes as $size): ?>
+                                <option value="<?php echo $size['size_id']; ?>"><?php echo htmlspecialchars($size['size_name']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <select name="color_id[]" class="form-control" required>
+                            <option value="">Select Color</option>
+                            <?php foreach ($colors as $color): ?>
+                                <option value="<?php echo $color['color_id']; ?>"><?php echo htmlspecialchars($color['color_name']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <input type="number" name="stock[]" class="form-control" placeholder="Stock" required>
+                    </div>
+                    <div class="col">
+                        <input type="number" step="0.01" name="variant_price[]" class="form-control" placeholder="Price" required>
                     </div>
                 </div>
             </div>
-            <button type="button" id="add-variant" class="btn btn-secondary mt-2">Add Another Variant</button>
+        </div>
+        <button type="button" id="add-variant" class="btn btn-secondary mt-2">Add Another Variant</button>
 
-            <div class="mt-4">
-                <button type="submit" class="btn btn-primary">Create Product</button>
-            </div>
-        </form>
-    </div>
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Create Product</button>
+        </div>
+    </form>
 </div>
 
 <script>
