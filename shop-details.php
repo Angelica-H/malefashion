@@ -22,21 +22,18 @@ if (!$product) {
     die("Sản phẩm không tồn tại");
 }
 
-// Truy vấn để lấy các biến thể của sản phẩm
-$variantQuery = "SELECT pv.*, s.size_name, c.color_name, c.color_code 
+// Truy vấn để lấy các biến thể của sản phẩm và thông tin SKU
+$variantQuery = "SELECT pv.*, s.size_name, c.color_name, c.color_code, sku.stock, sku.price as variant_price
                  FROM product_variants pv
                  LEFT JOIN sizes s ON pv.size_id = s.size_id
                  LEFT JOIN colors c ON pv.color_id = c.color_id
+                 LEFT JOIN sku ON pv.variant_id = sku.variant_id
                  WHERE pv.product_id = ?";
 $stmt = $conn->prepare($variantQuery);
 $stmt->bind_param("i", $product_id);
 $stmt->execute();
 $variantResult = $stmt->get_result();
 $variants = $variantResult->fetch_all(MYSQLI_ASSOC);
-
-// Tạo mảng các kích thước và màu sắc duy nhất
-$sizes = array_unique(array_column($variants, 'size_name'));
-$colors = array_unique(array_column($variants, 'color_name'));
 
 // Tổ chức lại dữ liệu biến thể
 $productVariants = [];
@@ -52,9 +49,13 @@ foreach ($variants as $variant) {
         'variant_id' => $variant['variant_id'],
         'size_id' => $variant['size_id'],
         'size_name' => $variant['size_name'],
-        'stock' => $variant['stock']
+        'stock' => $variant['stock'],
+        'price' => $variant['variant_price']
     ];
 }
+
+// Thêm ghi log để gỡ lỗi
+error_log("Product Variants: " . print_r($productVariants, true));
 
 $productDataJson = htmlspecialchars(json_encode([
     'id' => $product['product_id'],
@@ -114,30 +115,7 @@ $productDataJson = htmlspecialchars(json_encode([
                         </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-lg-3 col-md-3">
-                        <ul class="nav nav-tabs" role="tablist">
-                            <li class="nav-item">
-                                <a class="nav-link active" data-toggle="tab" href="#tabs-1" role="tab">
-                                    <div class="product__thumb__pic set-bg"
-                                        data-setbg="assets/img/product/<?php echo $product['product_image']; ?>">
-                                    </div>
-                                </a>
-                            </li>
-                            <!-- Thêm các ảnh khác nếu cần -->
-                        </ul>
-                    </div>
-                    <div class="col-lg-6 col-md-9">
-                        <div class="tab-content">
-                            <div class="tab-pane active" id="tabs-1" role="tabpanel">
-                                <div class="product__details__pic__item">
-                                    <img src="assets/img/product/<?php echo $product['product_image']; ?>" alt="">
-                                </div>
-                            </div>
-                            <!-- Thêm các tab ảnh khác nếu cần -->
-                        </div>
-                    </div>
-                </div>
+                
             </div>
         </div>
         <div class="product__details__content">
@@ -149,7 +127,7 @@ $productDataJson = htmlspecialchars(json_encode([
             <div class="product__details__pic">
                 <div class="product__details__pic__item">
                     <img class="product__details__pic__item--large"
-                        src="/<?php echo htmlspecialchars($product['product_image']); ?>" alt="<?php echo htmlspecialchars($product['product_name']); ?>">
+                        src="<?php echo htmlspecialchars($product['product_image']); ?>" alt="<?php echo htmlspecialchars($product['product_name']); ?>">
                 </div>
                 <div class="product__details__pic__slider owl-carousel">
                     <?php foreach ($images as $image): ?>
@@ -170,9 +148,14 @@ $productDataJson = htmlspecialchars(json_encode([
                     <i class="fa fa-star-o"></i>
                     <span> - 5 Reviews</span>
                 </div>
-                <h3><?php echo number_format($product['sale_price'], 0, ',', '.'); ?>đ
-                    <?php if ($product['price'] > $product['sale_price']): ?>
-                        <span><?php echo number_format($product['price'], 0, ',', '.'); ?>đ</span>
+                <h3>
+                    <?php if ($product['sale_price'] && $product['sale_price'] < $product['price']): ?>
+                        <?php echo number_format($product['sale_price'], 0, ',', '.'); ?>đ
+                        <span style="text-decoration: line-through; color: #b2b2b2; font-size: 0.8em;">
+                            <?php echo number_format($product['price'], 0, ',', '.'); ?>đ
+                        </span>
+                    <?php else: ?>
+                        <?php echo number_format($product['price'], 0, ',', '.'); ?>đ
                     <?php endif; ?>
                 </h3>
                 <p><?php echo htmlspecialchars($product['description']); ?></p>
@@ -237,9 +220,10 @@ $productDataJson = htmlspecialchars(json_encode([
                     <div class="col-lg-12">
                         <div class="product__details__tab">
                             <ul class="nav nav-tabs" role="tablist">
-                                <li class="nav-item">
+                                <!-- <li class="nav-item">
                                     <a class="nav-link active" data-toggle="tab" href="#tabs-5" role="tab">Mô Tả</a>
                                 </li>
+                                --> 
                                 <li class="nav-item">
                                     <a class="nav-link" data-toggle="tab" href="#tabs-6" role="tab">Đánh Giá Khách
                                         Hàng</a>
@@ -285,148 +269,62 @@ $productDataJson = htmlspecialchars(json_encode([
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <h3 class="related-title">Related Product</h3>
+                    <h3 class="related-title">Sản phẩm liên quan</h3>
                 </div>
             </div>
             <div class="row">
-                <div class="col-lg-3 col-md-6 col-sm-6 col-sm-6">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-1.jpg">
-                            <span class="label">New</span>
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>Piqué Biker Jacket</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
+                <?php
+                // Lấy category_id của sản phẩm hiện tại
+                $current_category_id = $product['category_id'];
+                
+                // Truy vấn để lấy các sản phẩm liên quan
+                $related_sql = "SELECT p.*, b.brand_name 
+                                FROM products p
+                                LEFT JOIN brands b ON p.brand_id = b.brand_id
+                                WHERE p.category_id = ? AND p.product_id != ?
+                                ORDER BY RAND()
+                                LIMIT 4";
+                $stmt = $conn->prepare($related_sql);
+                $stmt->bind_param("ii", $current_category_id, $product_id);
+                $stmt->execute();
+                $related_result = $stmt->get_result();
+
+                while ($related_product = $related_result->fetch_assoc()) {
+                    ?>
+                    <div class="col-lg-3 col-md-6 col-sm-6">
+                        <div class="product__item">
+                            <div class="product__item__pic set-bg" data-setbg="<?php echo htmlspecialchars($related_product['product_image']); ?>">
+                                <?php if ($related_product['is_new_arrival']): ?>
+                                    <span class="label">New</span>
+                                <?php endif; ?>
+                                <ul class="product__hover">
+                                    <li><a href="#"><img src="assets/img/icon/heart.png" alt=""></a></li>
+                                    <li><a href="#"><img src="assets/img/icon/compare.png" alt=""> <span>So sánh</span></a></li>
+                                    <li><a href="shop-details.php?id=<?php echo $related_product['product_id']; ?>"><img src="assets/img/icon/search.png" alt=""></a></li>
+                                </ul>
                             </div>
-                            <h5>$67.24</h5>
-                            <div class="product__color__select">
-                                <label for="pc-1">
-                                    <input type="radio" id="pc-1">
-                                </label>
-                                <label class="active black" for="pc-2">
-                                    <input type="radio" id="pc-2">
-                                </label>
-                                <label class="grey" for="pc-3">
-                                    <input type="radio" id="pc-3">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-sm-6">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-2.jpg">
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>Piqué Biker Jacket</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <h5>$67.24</h5>
-                            <div class="product__color__select">
-                                <label for="pc-4">
-                                    <input type="radio" id="pc-4">
-                                </label>
-                                <label class="active black" for="pc-5">
-                                    <input type="radio" id="pc-5">
-                                </label>
-                                <label class="grey" for="pc-6">
-                                    <input type="radio" id="pc-6">
-                                </label>
+                            <div class="product__item__text">
+                                <h6><?php echo htmlspecialchars($related_product['product_name']); ?></h6>
+                                <a href="shop-details.php?id=<?php echo $related_product['product_id']; ?>" class="add-cart">+ Xem chi tiết</a>
+                                <div class="rating">
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star-o"></i>
+                                </div>
+                                <?php if ($related_product['sale_price']): ?>
+                                    <h5><span class="original-price"><?php echo number_format($related_product['price']); ?> đ</span> <?php echo number_format($related_product['sale_price']); ?> đ</h5>
+                                <?php else: ?>
+                                    <h5><?php echo number_format($related_product['price']); ?> đ</h5>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-sm-6">
-                    <div class="product__item sale">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-3.jpg">
-                            <span class="label">Sale</span>
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>Multi-pocket Chest Bag</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <h5>$43.48</h5>
-                            <div class="product__color__select">
-                                <label for="pc-7">
-                                    <input type="radio" id="pc-7">
-                                </label>
-                                <label class="active black" for="pc-8">
-                                    <input type="radio" id="pc-8">
-                                </label>
-                                <label class="grey" for="pc-9">
-                                    <input type="radio" id="pc-9">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-sm-6">
-                    <div class="product__item">
-                        <div class="product__item__pic set-bg" data-setbg="img/product/product-4.jpg">
-                            <ul class="product__hover">
-                                <li><a href="#"><img src="img/icon/heart.png" alt=""></a></li>
-                                <li><a href="#"><img src="img/icon/compare.png" alt=""> <span>Compare</span></a></li>
-                                <li><a href="#"><img src="img/icon/search.png" alt=""></a></li>
-                            </ul>
-                        </div>
-                        <div class="product__item__text">
-                            <h6>Diagonal Textured Cap</h6>
-                            <a href="#" class="add-cart">+ Add To Cart</a>
-                            <div class="rating">
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                                <i class="fa fa-star-o"></i>
-                            </div>
-                            <h5>$60.9</h5>
-                            <div class="product__color__select">
-                                <label for="pc-10">
-                                    <input type="radio" id="pc-10">
-                                </label>
-                                <label class="active black" for="pc-11">
-                                    <input type="radio" id="pc-11">
-                                </label>
-                                <label class="grey" for="pc-12">
-                                    <input type="radio" id="pc-12">
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <?php
+                }
+                $stmt->close();
+                ?>
             </div>
         </div>
     </section>
@@ -450,94 +348,120 @@ $productDataJson = htmlspecialchars(json_encode([
     <!-- Js Plugins -->
     <?php include "includes/js.php" ?>
     <script>
+        // Hàm này được sử dụng để đặt màu sắc được chọn là active
         function setActiveColor(selectedInput) {
+            // Lấy tất cả các label màu sắc
             const colorLabels = document.querySelectorAll('.product__details__option__color label');
 
+            // Xóa class 'active' từ tất cả các label
             colorLabels.forEach(label => label.classList.remove('active'));
 
+            // Thêm class 'active' vào label của input được chọn
             selectedInput.parentElement.classList.add('active');
         }
 
     </script>
     <script>
-function updateSizeOptions(colorId, productDataJson) {
-    const product = JSON.parse(productDataJson);
-    const sizeOptionsContainer = document.getElementById('size-options');
-    sizeOptionsContainer.innerHTML = '';
+        // Hàm này cập nhật các tùy chọn kích thước dựa trên màu sắc được chọn
+        function updateSizeOptions(colorId, productDataJson) {
+            // Parse dữ liệu sản phẩm từ JSON
+            const product = JSON.parse(productDataJson);
+            // Lấy container chứa các tùy chọn kích thước
+            const sizeOptionsContainer = document.getElementById('size-options');
+            // Xóa tất cả các tùy chọn kích thước hiện tại
+            sizeOptionsContainer.innerHTML = '';
 
-    if (product.variants[colorId]) {
-        product.variants[colorId].sizes.forEach(size => {
-            const label = document.createElement('label');
-            label.innerHTML = `
-                <input type="radio" name="size" value="${size.variant_id}"
-                       onclick="setActiveSize(this)">
-                ${size.size_name}
-            `;
-            sizeOptionsContainer.appendChild(label);
-        });
-    }
-}
+            // Nếu có các kích thước cho màu sắc đã chọn
+            if (product.variants[colorId]) {
+                // Tạo một label mới cho mỗi kích thước
+                product.variants[colorId].sizes.forEach(size => {
+                    const label = document.createElement('label');
+                    label.innerHTML = `
+                        <input type="radio" name="size" value="${size.variant_id}"
+                               data-size-id="${size.size_id}"
+                               onclick="setActiveSize(this)">
+                        ${size.size_name}
+                    `;
+                    sizeOptionsContainer.appendChild(label);
+                });
+            }
+        }
 
-function setActiveSize(input) {
-    const labels = input.closest('.product__details__option__size').querySelectorAll('label');
-    labels.forEach(label => label.classList.remove('active'));
-    input.parentElement.classList.add('active');
-}
+        // Hàm này đặt kích thước được chọn là active
+        function setActiveSize(input) {
+            const labels = input.closest('.product__details__option__size').querySelectorAll('label');
+            labels.forEach(label => label.classList.remove('active'));
+            input.parentElement.classList.add('active');
+        }
 
-function setActiveColor(input) {
-    const labels = input.closest('.product__details__option__color').querySelectorAll('label');
-    labels.forEach(label => label.classList.remove('active'));
-    input.parentElement.classList.add('active');
-}
+        // Hàm này đặt màu sắc được chọn là active
+        function setActiveColor(input) {
+            const labels = input.closest('.product__details__option__color').querySelectorAll('label');
+            labels.forEach(label => label.classList.remove('active'));
+            input.parentElement.classList.add('active');
+        }
 
-function addToCartWithVariant(productDataJson) {
-    const product = JSON.parse(productDataJson);
-    const colorInput = document.querySelector('input[name="color"]:checked');
-    const sizeInput = document.querySelector('input[name="size"]:checked');
-    const quantity = parseInt(document.getElementById('quantity').value);
+        // Hàm này thêm sản phẩm vào giỏ hàng với biến thể đã chọn
+        function addToCartWithVariant(productDataJson) {
+            const product = JSON.parse(productDataJson);
+            const colorInput = document.querySelector('input[name="color"]:checked');
+            const sizeInput = document.querySelector('input[name="size"]:checked');
+            const quantity = parseInt(document.getElementById('quantity').value);
 
-    if (!colorInput || !sizeInput) {
-        alert('Vui lòng chọn màu sắc và kích thước');
-        return;
-    }
+            // Kiểm tra xem đã chọn màu sắc và kích thước chưa
+            if (!colorInput || !sizeInput) {
+                alert('Vui lòng chọn màu sắc và kích thước');
+                return;
+            }
 
-    const colorId = colorInput.value;
-    const variantId = sizeInput.value;
-    const selectedColor = product.variants[colorId].color_name;
-    const selectedSize = product.variants[colorId].sizes.find(size => size.variant_id == variantId).size_name;
+            const colorId = colorInput.value;
+            const variantId = sizeInput.value;
+            const sizeId = sizeInput.dataset.sizeId;
+            const selectedColor = product.variants[colorId].color_name;
+            const selectedSize = product.variants[colorId].sizes.find(size => size.variant_id == variantId).size_name;
 
-    const cartItem = {
-        product_id: product.id,
-        variant_id: variantId,
-        name: product.name,
-        price: product.sale_price && parseFloat(product.sale_price) > 0 ? product.sale_price : product.price,
-        quantity: quantity,
-        color: selectedColor,
-        size: selectedSize,
-        image: product.image
-    };
+            // Tạo đối tượng sản phẩm để thêm vào giỏ hàng
+            const cartItem = {
+                product_id: product.id,
+                variant_id: variantId,
+                color_id: colorId,
+                size_id: sizeId,
+                name: product.name,
+                price: product.sale_price && parseFloat(product.sale_price) > 0 ? product.sale_price : product.price,
+                quantity: quantity,
+                color: selectedColor,
+                size: selectedSize,
+                image: product.image
+            };
 
-    addToCart(cartItem);
-}
+            addToCart(cartItem);
+        }
 
-function addToCart(item) {
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-    
-    const existingItemIndex = cart.findIndex(cartItem => 
-        cartItem.variant_id === item.variant_id
-    );
+        // Hàm này thêm sản phẩm vào giỏ hàng
+        function addToCart(item) {
+            // Lấy giỏ hàng từ localStorage hoặc tạo mới nếu chưa có
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            
+            // Kiểm tra xem sản phẩm đã có trong giỏ hàng chưa
+            const existingItemIndex = cart.findIndex(cartItem => 
+                cartItem.variant_id === item.variant_id
+            );
 
-    if (existingItemIndex > -1) {
-        cart[existingItemIndex].quantity += item.quantity;
-    } else {
-        cart.push(item);
-    }
+            if (existingItemIndex > -1) {
+                // Nếu sản phẩm đã có, tăng số lượng
+                cart[existingItemIndex].quantity += item.quantity;
+            } else {
+                // Nếu sản phẩm chưa có, thêm mới vào giỏ hàng
+                cart.push(item);
+            }
 
-    localStorage.setItem('cart', JSON.stringify(cart));
-    alert('Đã thêm vào giỏ hàng');
-    updateCartDisplay();
-}
-</script>
+            // Lưu giỏ hàng vào localStorage
+            localStorage.setItem('cart', JSON.stringify(cart));
+            alert('Đã thêm vào giỏ hàng');
+            // Cập nhật hiển thị giỏ hàng
+            updateCartDisplay();
+        }
+    </script>
 </body>
 
 </html>

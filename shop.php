@@ -169,47 +169,7 @@ $result = $conn->query($sql);
                                         </div>
                                     </div>
                                 </div>
-                                <div class="card">
-                                    <div class="card-heading">
-                                        <a data-toggle="collapse" data-target="#collapseFour">Size</a>
-                                    </div>
-                                    <div id="collapseFour" class="collapse show" data-parent="#accordionExample">
-                                        <div class="card-body">
-                                            <div class="shop__sidebar__size">
-                                                <?php
-                                                $size_sql = "SELECT * FROM sizes";
-                                                $size_result = $conn->query($size_sql);
-                                                while ($size = $size_result->fetch_assoc()) {
-                                                    echo "<label for='size-{$size['size_id']}'>
-                                                            <input type='radio' id='size-{$size['size_id']}' name='size' value='{$size['size_id']}' " . ($size_id == $size['size_id'] ? 'checked' : '') . ">
-                                                            {$size['size_name']}
-                                                          </label>";
-                                                }
-                                                ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card">
-                                    <div class="card-heading">
-                                        <a data-toggle="collapse" data-target="#collapseFive">Colors</a>
-                                    </div>
-                                    <div id="collapseFive" class="collapse show" data-parent="#accordionExample">
-                                        <div class="card-body">
-                                            <div class="shop__sidebar__color">
-                                                <?php
-                                                $color_sql = "SELECT * FROM colors";
-                                                $color_result = $conn->query($color_sql);
-                                                while ($color = $color_result->fetch_assoc()) {
-                                                    echo "<label class='c-{$color['color_id']}' for='color-{$color['color_id']}' style='background-color: {$color['color_code']}'>
-                                                            <input type='radio' id='color-{$color['color_id']}' name='color' value='{$color['color_id']}' " . ($color_id == $color['color_id'] ? 'checked' : '') . ">
-                                                          </label>";
-                                                }
-                                                ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                             </div>
                         </div>
                     </div>
@@ -261,20 +221,20 @@ $result = $conn->query($sql);
                                     $availableColors[] = $color['color_name'];
                                 }
 
-                                $productData = [
-                                    'id' => $row['product_id'],
-                                    'name' => $row['product_name'],
-                                    'price' => $row['price'],
-                                    'sale_price' => $row['sale_price'],
-                                    'availableSizes' => $availableSizes,
-                                    'availableColors' => $availableColors,
-                                    'image' => $row['product_image']
-                                ];
-                                $productDataJson = htmlspecialchars(json_encode($productData), ENT_QUOTES, 'UTF-8');
+                                 // $productData = [
+                                 //   'id' => $row['product_id'],
+                                 //   'name' => $row['product_name'],
+                                 //   'price' => $row['price'],
+                                 //   'sale_price' => $row['sale_price'],
+                                 //   'availableSizes' => $availableSizes,
+                                 //   'availableColors' => $availableColors,
+                                 //   'image' => $row['product_image']
+                                 // ];
+                                 // $productDataJson = htmlspecialchars(json_encode($productData), ENT_QUOTES, 'UTF-8');
                             ?>
                                 <div class="col-lg-4 col-md-6 col-sm-6">
                                     <div class="product__item">
-                                        <div class="product__item__pic set-bg" data-setbg="/<?php echo htmlspecialchars($row['product_image']); ?>">
+                                        <div class="product__item__pic set-bg" data-setbg="<?php echo htmlspecialchars($row['product_image']); ?>">
                                             <ul class="product__hover">
                                                 <li><a href="#"><img src="assets/img/icon/heart.png" alt=""></a></li>
                                                 <li><a href="#"><img src="assets/img/icon/compare.png" alt=""> <span>Compare</span></a></li>
@@ -283,8 +243,8 @@ $result = $conn->query($sql);
                                         </div>
                                         <div class="product__item__text">
                                             <h6><?php echo htmlspecialchars($row['product_name']); ?></h6>
-                                            <a href="javascript:void(0)" class="add-cart" onclick="addToCartFromData('<?php echo $productDataJson; ?>')">
-                        Thêm vào giỏ hàng
+                                            <a href="shop-details.php?id=<?php echo htmlspecialchars($row['product_id']); ?>" class="add-cart">
+                        Xem chi tiết
                     </a>
                                             <div class="rating">
                                                 <i class="fa fa-star-o"></i>

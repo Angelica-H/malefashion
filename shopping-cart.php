@@ -70,11 +70,12 @@ session_start();
                             <thead>
                                 <tr>
                                     <th>Sản Phẩm</th>
-                                    <th>kích cỡ</th>
                                     <th>Màu sắc</th>
+                                    <th>Kích cỡ</th>
+                                    <th>Giá</th>
                                     <th>Số Lượng</th>
                                     <th>Tổng</th>
-                                    <th>Hành Động</th>
+                                    <th class="text-center">Hành Động</th>
                                 </tr>
                             </thead>
                             <tbody id="cart-content">

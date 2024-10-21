@@ -166,22 +166,6 @@ if ($result_all_products === false) {
     echo "Lỗi truy vấn: " . $conn->error;
 } elseif ($result_all_products->num_rows > 0) {
     while ($product = $result_all_products->fetch_assoc()) {
-        // Chuyển đổi chuỗi sizes và colors thành mảng
-        $availableSizes = $product['sizes'] ? explode(',', $product['sizes']) : [];
-        $availableColors = $product['colors'] ? explode(',', $product['colors']) : [];
-        
-        // Chuẩn bị dữ liệu sản phẩm để truyền vào JavaScript
-        $productData = [
-            'id' => $product['product_id'],
-            'name' => $product['product_name'],
-            'price' => $product['price'],
-            'sale_price' => $product['sale_price'],
-            'availableSizes' => $availableSizes,
-            'availableColors' => $availableColors,
-            'image' =>  $product['product_image']
-        ];
-        $productDataJson = htmlspecialchars(json_encode($productData), ENT_QUOTES, 'UTF-8');
-
         // Xác định các lớp CSS cho việc lọc
         $filterClasses = [];
         if ($product['is_best_seller']) $filterClasses[] = 'best-seller';
@@ -192,7 +176,7 @@ if ($result_all_products === false) {
         <div class="col-lg-3 col-md-6 col-sm-6 mix <?php echo $filterClassString; ?>">
             <div class="product__item">
                 <div class="product__item__pic set-bg"
-                    data-setbg="/<?php echo htmlspecialchars($product['product_image']); ?>">
+                    data-setbg="<?php echo htmlspecialchars($product['product_image']); ?>">
                     <?php if ($product['is_new_arrival']): ?>
                         <span class="label">New</span>
                     <?php elseif ($product['is_hot_sale']): ?>
@@ -206,8 +190,8 @@ if ($result_all_products === false) {
                 </div>
                 <div class="product__item__text">
                     <h6><?php echo htmlspecialchars($product['product_name']); ?></h6>
-                    <a href="javascript:void(0)" class="add-cart" onclick="addToCartFromData('<?php echo $productDataJson; ?>')">
-                        Thêm vào giỏ hàng
+                    <a href="shop-details.php?id=<?php echo $product['product_id']; ?>" class="add-cart">
+                        Xem chi tiết sản phẩm
                     </a>
                     <div class="rating">
                         <i class="fa fa-star-o"></i>
