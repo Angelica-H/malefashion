@@ -139,29 +139,22 @@ session_start();
                     </div>
                 </div>
             </div>
-            <div class="row ">
-            <div class="col-lg-12">
-                    <div class="cart__discount">
-                        <h6>Mã giảm giá</h6>
-                        <form action="#">
-                            <input type="text" placeholder="Nhập mã giảm giá">
-                            <button type="submit">Áp dụng</button>
-                        </form>
-                    </div>
-                    <form id="checkout-form" action="process_checkout.php" method="POST" onsubmit="submitCheckout()">
-                        <div class="cart__total">
-                            <h6>Cart total</h6>
-                            <ul>
-                                <li>Phí ship <span>30 USD</span></li>
-                                <li>Tổng tiền <span id="total-amount">0 USD</span></li>
-                            </ul>
-                            <input type="hidden" name="total_amount" id="total_amount" value="0">
-                            <input type="hidden" name="cart_data" id="cart_data" value="">
-                            <button type="submit" class="primary-btn">Proceed to checkout</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+            <div class="row">
+    <div class="col-lg-8">
+        <!-- Nội dung giỏ hàng -->
+    </div>
+    <div class="col-lg-4">
+        <div class="cart__total">
+            <h6>Tổng giỏ hàng</h6>
+            <ul>
+                <li>Tổng phụ <span id="subtotal">0 đ</span></li>
+                <li>Phí ship <span id="shipping-fee">0 đ</span></li>
+                <li>Tổng cộng <span id="total-amount">0 đ</span></li>
+            </ul>
+            <a href="checkout.php" class="primary-btn" >Tiến hành thanh toán</a>
+        </div>
+    </div>
+</div>
         </div>
     </section>
     <!-- Shopping Cart Section End -->

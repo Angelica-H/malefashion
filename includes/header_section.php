@@ -41,6 +41,7 @@
                                 <li><a href="./about.php">About Us</a></li>
                                 <li><a href="./account_details.php">Tài khoản</a></li>
                                 <li><a href="./shopping-cart.php">Giỏ hàng</a></li>
+                                <li><a href="./order-info.php">Đơn hàng</a></li>
                                 <li><a href="./checkout.php">Thanh toán</a></li>
                                 <li><a href="./blog-details.php">Blog Details</a></li>
                             </ul>
@@ -57,12 +58,12 @@
     <a href="#"><img src="img/icon/heart.png" alt=""></a>
     <a href="./shopping-cart.php"><img src="./assets/img/icon/cart.png" alt="">
         <span id="cart-count">
-            <script>document.write(localStorage.getItem('cartCount') || '0');</script>
+            <!--<script>document.write(localStorage.getItem('cartCount') || '0');</script>-->
         </span>
     </a>
     <div class="price">
         Tổng: <span id="cart-total">
-            <script>document.write(localStorage.getItem('cartTotal') || '0 đ');</script>
+            <!--<script>document.write(localStorage.getItem('cartTotal') || '0 đ');</script>-->
         </span>
     </div>
 </div>

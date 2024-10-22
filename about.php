@@ -1,5 +1,8 @@
+<?php include "includes/db_connect.php";
+session_start();
+?>
 <!DOCTYPE html>
-<html lang="zxx">
+<html lang="vi">
 
 <head>
     <meta charset="UTF-8">
@@ -7,7 +10,7 @@
     <meta name="keywords" content="Male_Fashion, unica, creative, html">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Male-Fashion | Template</title>
+    <title>Male-Fashion | Mẫu</title>
 
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap"
@@ -19,105 +22,105 @@
 </head>
 
 <body>
-    <!-- Page Preloder -->
+    <!-- Tải trang -->
     <div id="preloder">
         <div class="loader"></div>
     </div>
 
-    <!-- Offcanvas Menu Begin -->
+    <!-- Menu ngoài lề Bắt đầu -->
     <?php  include "includes/menu_begin.php"
     ?>
-    <!-- Offcanvas Menu End -->
+    <!-- Menu ngoài lề Kết thúc -->
 
-    <!-- Header Section Begin -->
+    <!-- Phần Header Bắt đầu -->
     <?php include "includes/header_section.php" ?>
-    <!-- Header Section End -->
+    <!-- Phần Header Kết thúc -->
 
-    <!-- Breadcrumb Section Begin -->
+    <!-- Phần Breadcrumb Bắt đầu -->
     <section class="breadcrumb-option">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
                     <div class="breadcrumb__text">
-                        <h4>About Us</h4>
+                        <h4>Về Chúng Tôi</h4>
                         <div class="breadcrumb__links">
-                            <a href="./index.html">Home</a>
-                            <span>About Us</span>
+                            <a href="./index.html">Trang chủ</a>
+                            <span>Về Chúng Tôi</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    <!-- Breadcrumb Section End -->
+    <!-- Phần Breadcrumb Kết thúc -->
 
-    <!-- About Section Begin -->
+    <!-- Phần Giới Thiệu Bắt đầu -->
     <section class="about spad">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
                     <div class="about__pic">
-                        <img src="img/about/about-us.jpg" alt="">
+                        <img src="./assets/img/about/about-us.jpg" alt="">
                     </div>
                 </div>
             </div>
             <div class="row">
                 <div class="col-lg-4 col-md-4 col-sm-6">
                     <div class="about__item">
-                        <h4>Who We Are ?</h4>
-                        <p>Contextual advertising programs sometimes have strict policies that need to be adhered too.
-                        Let’s take Google as an example.</p>
+                        <h4>Chúng Tôi Là Ai?</h4>
+                        <p>Các chương trình quảng cáo theo ngữ cảnh đôi khi có những chính sách nghiêm ngặt cần phải tuân thủ.
+                        Hãy lấy Google làm ví dụ.</p>
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-4 col-sm-6">
                     <div class="about__item">
-                        <h4>Who We Do ?</h4>
-                        <p>In this digital generation where information can be easily obtained within seconds, business
-                        cards still have retained their importance.</p>
+                        <h4>Chúng Tôi Làm Gì?</h4>
+                        <p>Trong thế hệ kỹ thuật số này, nơi thông tin có thể dễ dàng thu được trong vài giây, danh thiếp
+                        vẫn giữ được tầm quan trọng của chúng.</p>
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-4 col-sm-6">
                     <div class="about__item">
-                        <h4>Why Choose Us</h4>
-                        <p>A two or three storey house is the ideal way to maximise the piece of earth on which our home
-                        sits, but for older or infirm people.</p>
+                        <h4>Tại Sao Chọn Chúng Tôi</h4>
+                        <p>Một ngôi nhà hai hoặc ba tầng là cách lý tưởng để tối đa hóa mảnh đất mà ngôi nhà của chúng ta
+                        tọa lạc, nhưng đối với người già hoặc người khuyết tật.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    <!-- About Section End -->
+    <!-- Phần Giới Thiệu Kết thúc -->
 
-    <!-- Testimonial Section Begin -->
+    <!-- Phần Đánh Giá Bắt đầu -->
     <section class="testimonial">
         <div class="container-fluid">
             <div class="row">
                 <div class="col-lg-6 p-0">
                     <div class="testimonial__text">
                         <span class="icon_quotations"></span>
-                        <p>“Going out after work? Take your butane curling iron with you to the office, heat it up,
-                            style your hair before you leave the office and you won’t have to make a trip back home.”
+                        <p>"Đi chơi sau giờ làm? Hãy mang theo máy uốn tóc butane đến văn phòng, làm nóng nó,
+                            tạo kiểu tóc trước khi rời văn phòng và bạn sẽ không phải quay lại nhà."
                         </p>
                         <div class="testimonial__author">
                             <div class="testimonial__author__pic">
-                                <img src="img/about/testimonial-author.jpg" alt="">
+                                <img src="./assets/img/about/testimonial-author.jpg" alt="">
                             </div>
                             <div class="testimonial__author__text">
                                 <h5>Augusta Schultz</h5>
-                                <p>Fashion Design</p>
+                                <p>Thiết Kế Thời Trang</p>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-6 p-0">
-                    <div class="testimonial__pic set-bg" data-setbg="img/about/testimonial-pic.jpg"></div>
+                    <div class="testimonial__pic set-bg" data-setbg="./assets/img/about/testimonial-pic.jpg"></div>
                 </div>
             </div>
         </div>
     </section>
-    <!-- Testimonial Section End -->
+    <!-- Phần Đánh Giá Kết thúc -->
 
-    <!-- Counter Section Begin -->
+    <!-- Phần Đếm Số Bắt đầu -->
     <section class="counter spad">
         <div class="container">
             <div class="row">
@@ -126,7 +129,7 @@
                         <div class="counter__item__number">
                             <h2 class="cn_num">102</h2>
                         </div>
-                        <span>Our <br />Clients</span>
+                        <span>Khách hàng <br />của chúng tôi</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
@@ -134,7 +137,7 @@
                         <div class="counter__item__number">
                             <h2 class="cn_num">30</h2>
                         </div>
-                        <span>Total <br />Categories</span>
+                        <span>Tổng số <br />Danh mục</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
@@ -142,7 +145,7 @@
                         <div class="counter__item__number">
                             <h2 class="cn_num">102</h2>
                         </div>
-                        <span>In <br />Country</span>
+                        <span>Trong <br />Quốc gia</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
@@ -151,114 +154,114 @@
                             <h2 class="cn_num">98</h2>
                             <strong>%</strong>
                         </div>
-                        <span>Happy <br />Customer</span>
+                        <span>Khách hàng <br />Hài lòng</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    <!-- Counter Section End -->
+    <!-- Phần Đếm Số Kết thúc -->
 
-    <!-- Team Section Begin -->
+    <!-- Phần Đội Ngũ Bắt đầu -->
     <section class="team spad">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
                     <div class="section-title">
-                        <span>Our Team</span>
-                        <h2>Meet Our Team</h2>
+                        <span>Đội ngũ của chúng tôi</span>
+                        <h2>Gặp gỡ đội ngũ của chúng tôi</h2>
                     </div>
                 </div>
             </div>
             <div class="row">
                 <div class="col-lg-3 col-md-6 col-sm-6">
                     <div class="team__item">
-                        <img src="img/about/team-1.jpg" alt="">
+                        <img src="./assets/img/about/team-1.jpg" alt="">
                         <h4>John Smith</h4>
-                        <span>Fashion Design</span>
+                        <span>Thiết kế thời trang</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
                     <div class="team__item">
-                        <img src="img/about/team-2.jpg" alt="">
+                        <img src="./assets/img/about/team-2.jpg" alt="">
                         <h4>Christine Wise</h4>
-                        <span>C.E.O</span>
+                        <span>Giám đốc điều hành</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
                     <div class="team__item">
-                        <img src="img/about/team-3.jpg" alt="">
+                        <img src="./assets/img/about/team-3.jpg" alt="">
                         <h4>Sean Robbins</h4>
-                        <span>Manager</span>
+                        <span>Quản lý</span>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 col-sm-6">
                     <div class="team__item">
-                        <img src="img/about/team-4.jpg" alt="">
+                        <img src="./assets/img/about/team-4.jpg" alt="">
                         <h4>Lucy Myers</h4>
-                        <span>Delivery</span>
+                        <span>Giao hàng</span>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    <!-- Team Section End -->
+    <!-- Phần Đội Ngũ Kết thúc -->
 
-    <!-- Client Section Begin -->
+    <!-- Phần Khách Hàng Bắt đầu -->
     <section class="clients spad">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
                     <div class="section-title">
-                        <span>Partner</span>
-                        <h2>Happy Clients</h2>
+                        <span>Đối tác</span>
+                        <h2>Khách hàng hài lòng</h2>
                     </div>
                 </div>
             </div>
             <div class="row">
                 <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-1.png" alt=""></a>
+                    <a href="#" class="client__item"><img src="./assets/img/clients/client-1.png" alt=""></a>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-2.png" alt=""></a>
+                    <a href="#" class="client__item"><img src="./assets/img/clients/client-2.png" alt=""></a>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-3.png" alt=""></a>
+                    <a href="#" class="client__item"><img src="./assets/img/clients/client-3.png" alt=""></a>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-4.png" alt=""></a>
+                    <a href="#" class="client__item"><img src="./assets/img/clients/client-4.png" alt=""></a>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-5.png" alt=""></a>
+                    <a href="#" class="client__item"><img src="./assets/img/clients/client-5.png" alt=""></a>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-6.png" alt=""></a>
+                    <a href="#" class="client__item"><img src="./assets/img/clients/client-6.png" alt=""></a>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-7.png" alt=""></a>
+                    <a href="#" class="client__item"><img src="./assets/img/clients/client-7.png" alt=""></a>
                 </div>
                 <div class="col-lg-3 col-md-4 col-sm-4 col-6">
-                    <a href="#" class="client__item"><img src="img/clients/client-8.png" alt=""></a>
+                    <a href="#" class="client__item"><img src="./assets/img/clients/client-8.png" alt=""></a>
                 </div>
             </div>
         </div>
     </section>
-    <!-- Client Section End -->
+    <!-- Phần Khách Hàng Kết thúc -->
 
-    <!-- Footer Section Begin -->
+    <!-- Phần Footer Bắt đầu -->
     <?php include "includes/footer_section.php" ?>
-    <!-- Footer Section End -->
+    <!-- Phần Footer Kết thúc -->
 
-    <!-- Search Begin -->
+    <!-- Tìm Kiếm Bắt đầu -->
     <div class="search-model">
         <div class="h-100 d-flex align-items-center justify-content-center">
             <div class="search-close-switch">+</div>
             <form class="search-model-form">
-                <input type="text" id="search-input" placeholder="Search here.....">
+                <input type="text" id="search-input" placeholder="Tìm kiếm ở đây.....">
             </form>
         </div>
     </div>
-    <!-- Search End -->
+    <!-- Tìm Kiếm Kết thúc -->
 
     <!-- Js Plugins -->
     <?php include "includes/js.php" ?>

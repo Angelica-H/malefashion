@@ -1,5 +1,9 @@
+<?php
+include "includes/db_connect.php";
+session_start();
+?>
 <!DOCTYPE html>
-<html lang="zxx">
+<html lang="vi">
 
 <head>
     <meta charset="UTF-8">
@@ -7,7 +11,7 @@
     <meta name="keywords" content="Male_Fashion, unica, creative, html">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Male-Fashion | Template</title>
+    <title>Thanh toán - Male-Fashion</title>
 
     <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&display=swap"
@@ -15,7 +19,6 @@
 
     <!-- Css Styles -->
     <?php include "includes/css.php" ?>
-
 </head>
 
 <body>
@@ -25,8 +28,7 @@
     </div>
 
     <!-- Offcanvas Menu Begin -->
-    <?php  include "includes/menu_begin.php"
-    ?>
+    <?php include "includes/menu_begin.php" ?>
     <!-- Offcanvas Menu End -->
 
     <!-- Header Section Begin -->
@@ -39,11 +41,11 @@
             <div class="row">
                 <div class="col-lg-12">
                     <div class="breadcrumb__text">
-                        <h4>Check Out</h4>
+                        <h4>Thanh toán</h4>
                         <div class="breadcrumb__links">
-                            <a href="./index.html">Home</a>
-                            <a href="./shop.html">Shop</a>
-                            <span>Check Out</span>
+                            <a href="./index.php">Trang chủ</a>
+                            <a href="./shop.php">Cửa hàng</a>
+                            <span>Thanh toán</span>
                         </div>
                     </div>
                 </div>
@@ -56,125 +58,67 @@
     <section class="checkout spad">
         <div class="container">
             <div class="checkout__form">
-                <form action="#">
+                <form id="checkout-form" action="includes/process_order.php" method="POST">
                     <div class="row">
                         <div class="col-lg-8 col-md-6">
-                            <h6 class="coupon__code"><span class="icon_tag_alt"></span> Have a coupon? <a href="#">Click
-                            here</a> to enter your code</h6>
-                            <h6 class="checkout__title">Billing Details</h6>
+                            <h6 class="checkout__title">Thông tin thanh toán</h6>
                             <div class="row">
                                 <div class="col-lg-6">
                                     <div class="checkout__input">
-                                        <p>Fist Name<span>*</span></p>
-                                        <input type="text">
+                                        <p>Họ<span>*</span></p>
+                                        <input type="text" name="last_name" value="<?php echo isset($_SESSION['last_name']) ? htmlspecialchars($_SESSION['last_name']) : ''; ?>" required>
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="checkout__input">
-                                        <p>Last Name<span>*</span></p>
-                                        <input type="text">
+                                        <p>Tên<span>*</span></p>
+                                        <input type="text" name="first_name" value="<?php echo isset($_SESSION['first_name']) ? htmlspecialchars($_SESSION['first_name']) : ''; ?>" required>
                                     </div>
                                 </div>
                             </div>
                             <div class="checkout__input">
-                                <p>Country<span>*</span></p>
-                                <input type="text">
-                            </div>
-                            <div class="checkout__input">
-                                <p>Address<span>*</span></p>
-                                <input type="text" placeholder="Street Address" class="checkout__input__add">
-                                <input type="text" placeholder="Apartment, suite, unite ect (optinal)">
-                            </div>
-                            <div class="checkout__input">
-                                <p>Town/City<span>*</span></p>
-                                <input type="text">
-                            </div>
-                            <div class="checkout__input">
-                                <p>Country/State<span>*</span></p>
-                                <input type="text">
-                            </div>
-                            <div class="checkout__input">
-                                <p>Postcode / ZIP<span>*</span></p>
-                                <input type="text">
+                                <p>Địa chỉ<span>*</span></p>
+                                <input type="text" name="shipping_address" value="<?php echo isset($_SESSION['shipping_address']) ? htmlspecialchars($_SESSION['shipping_address']) : ''; ?>" placeholder="Địa chỉ giao hàng" class="checkout__input__add" required>
                             </div>
                             <div class="row">
                                 <div class="col-lg-6">
                                     <div class="checkout__input">
-                                        <p>Phone<span>*</span></p>
-                                        <input type="text">
+                                        <p>Số điện thoại<span>*</span></p>
+                                        <input type="text" name="phone_number" value="<?php echo isset($_SESSION['phone_number']) ? htmlspecialchars($_SESSION['phone_number']) : ''; ?>" required>
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="checkout__input">
                                         <p>Email<span>*</span></p>
-                                        <input type="text">
+                                        <input type="email" name="email" value="<?php echo isset($_SESSION['email']) ? htmlspecialchars($_SESSION['email']) : ''; ?>" required>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="checkout__input__checkbox">
-                                <label for="acc">
-                                    Create an account?
-                                    <input type="checkbox" id="acc">
-                                    <span class="checkmark"></span>
-                                </label>
-                                <p>Create an account by entering the information below. If you are a returning customer
-                                please login at the top of the page</p>
-                            </div>
-                            <div class="checkout__input">
-                                <p>Account Password<span>*</span></p>
-                                <input type="text">
-                            </div>
-                            <div class="checkout__input__checkbox">
-                                <label for="diff-acc">
-                                    Note about your order, e.g, special noe for delivery
-                                    <input type="checkbox" id="diff-acc">
-                                    <span class="checkmark"></span>
-                                </label>
-                            </div>
-                            <div class="checkout__input">
-                                <p>Order notes<span>*</span></p>
-                                <input type="text"
-                                placeholder="Notes about your order, e.g. special notes for delivery.">
                             </div>
                         </div>
                         <div class="col-lg-4 col-md-6">
                             <div class="checkout__order">
-                                <h4 class="order__title">Your order</h4>
-                                <div class="checkout__order__products">Product <span>Total</span></div>
-                                <ul class="checkout__total__products">
-                                    <li>01. Vanilla salted caramel <span>$ 300.0</span></li>
-                                    <li>02. German chocolate <span>$ 170.0</span></li>
-                                    <li>03. Sweet autumn <span>$ 170.0</span></li>
-                                    <li>04. Cluten free mini dozen <span>$ 110.0</span></li>
+                                <h4 class="order__title">Đơn hàng của bạn</h4>
+                                <div class="checkout__order__products">Sản phẩm <span>Tổng</span></div>
+                                <ul class="checkout__total__products" id="cart-items">
+                                    <!-- Các mục giỏ hàng sẽ được thêm vào đây bằng JavaScript -->
                                 </ul>
                                 <ul class="checkout__total__all">
-                                    <li>Subtotal <span>$750.99</span></li>
-                                    <li>Total <span>$750.99</span></li>
+                                    <li>Tổng phụ <span id="subtotal">0 đ</span></li>
+                                    <li>Phí vận chuyển <span id="shipping-fee">30,000 đ</span></li>
+                                    <li>Tổng cộng <span id="total-amount">0 đ</span></li>
                                 </ul>
                                 <div class="checkout__input__checkbox">
-                                    <label for="acc-or">
-                                        Create an account?
-                                        <input type="checkbox" id="acc-or">
-                                        <span class="checkmark"></span>
-                                    </label>
-                                </div>
-                                <p>Lorem ipsum dolor sit amet, consectetur adip elit, sed do eiusmod tempor incididunt
-                                ut labore et dolore magna aliqua.</p>
-                                <div class="checkout__input__checkbox">
                                     <label for="payment">
-                                        Check Payment
-                                        <input type="checkbox" id="payment">
-                                        <span class="checkmark"></span>
+                                            <label>Phương thức thanh toán</label>
+                                        <select name="payment_method" required>
+                                            <option value="COD">Thanh toán khi nhận hàng</option>
+                                            <option value="Bank Transfer">Chuyển khoản ngân hàng</option>
+                                        </select>
                                     </label>
                                 </div>
-                                <div class="checkout__input__checkbox">
-                                    <label for="paypal">
-                                        Paypal
-                                        <input type="checkbox" id="paypal">
-                                        <span class="checkmark"></span>
-                                    </label>
-                                </div>
-                                <button type="submit" class="site-btn">PLACE ORDER</button>
+                                <input type="hidden" name="total_amount" id="total_amount" value="0">
+                                <input type="hidden" name="cart_data" id="cart_data" value="">
+                                <button type="submit" class="site-btn" id="checkout-button">ĐẶT HÀNG</button>
                             </div>
                         </div>
                     </div>
@@ -185,70 +129,7 @@
     <!-- Checkout Section End -->
 
     <!-- Footer Section Begin -->
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-3 col-md-6 col-sm-6">
-                    <div class="footer__about">
-                        <div class="footer__logo">
-                            <a href="#"><img src="img/footer-logo.png" alt=""></a>
-                        </div>
-                        <p>The customer is at the heart of our unique business model, which includes design.</p>
-                        <a href="#"><img src="img/payment.png" alt=""></a>
-                    </div>
-                </div>
-                <div class="col-lg-2 offset-lg-1 col-md-3 col-sm-6">
-                    <div class="footer__widget">
-                        <h6>Shopping</h6>
-                        <ul>
-                            <li><a href="#">Clothing Store</a></li>
-                            <li><a href="#">Trending Shoes</a></li>
-                            <li><a href="#">Accessories</a></li>
-                            <li><a href="#">Sale</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-3 col-sm-6">
-                    <div class="footer__widget">
-                        <h6>Shopping</h6>
-                        <ul>
-                            <li><a href="#">Contact Us</a></li>
-                            <li><a href="#">Payment Methods</a></li>
-                            <li><a href="#">Delivary</a></li>
-                            <li><a href="#">Return & Exchanges</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-lg-3 offset-lg-1 col-md-6 col-sm-6">
-                    <div class="footer__widget">
-                        <h6>NewLetter</h6>
-                        <div class="footer__newslatter">
-                            <p>Be the first to know about new arrivals, look books, sales & promos!</p>
-                            <form action="#">
-                                <input type="text" placeholder="Your email">
-                                <button type="submit"><span class="icon_mail_alt"></span></button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-lg-12 text-center">
-                    <div class="footer__copyright__text">
-                        <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
-                        <p>Copyright ©
-                            <script>
-                                document.write(new Date().getFullYear());
-                            </script>2020
-                            All rights reserved | This template is made with <i class="fa fa-heart-o"
-                            aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib</a>
-                        </p>
-                        <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <?php include "includes/footer_section.php" ?>
     <!-- Footer Section End -->
 
     <!-- Search Begin -->
@@ -265,6 +146,58 @@
     <!-- Js Plugins -->
     <?php include "includes/js.php" ?>
 
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const cartItemsContainer = document.getElementById('cart-items');
+        const subtotalElement = document.getElementById('subtotal');
+        const totalAmountElement = document.getElementById('total-amount');
+        const totalAmountInput = document.getElementById('total_amount');
+        const cartDataInput = document.getElementById('cart_data');
+        const checkoutButton = document.getElementById('checkout-button');
+
+        if (cart.length === 0) {
+            alert('Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán.');
+            window.location.href = 'shop.php';
+            return;
+        }
+
+        let subtotal = 0;
+
+        cart.forEach((item, index) => {
+            const li = document.createElement('li');
+            const itemTotal = item.price * item.quantity;
+            subtotal += itemTotal;
+            li.textContent = `${item.name} x ${item.quantity} `;
+            li.innerHTML += `<span>${itemTotal.toLocaleString('vi-VN')} đ</span>`;
+            cartItemsContainer.appendChild(li);
+        });
+
+        const shippingFee = 30000;
+        const total = subtotal + shippingFee;
+        subtotalElement.textContent = `${subtotal.toLocaleString('vi-VN')} đ`;
+        totalAmountElement.textContent = `${total.toLocaleString('vi-VN')} đ`;
+        totalAmountInput.value = total;
+        cartDataInput.value = JSON.stringify(cart);
+
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!<?php echo isset($_SESSION['customer_id']) ? 'true' : 'false'; ?>) {
+                alert('Vui lòng đăng nhập để tiếp tục thanh toán.');
+                return;
+            }
+
+            if (cart.length === 0) {
+                alert('Giỏ hàng của bạn đang trống. Vui lòng thêm sản phẩm vào giỏ hàng trước khi thanh toán.');
+                window.location.href = 'shop.php';
+                return;
+            }
+
+            this.submit();
+        });
+    });
+    </script>
 </body>
 
 </html>

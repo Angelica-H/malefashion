@@ -460,6 +460,8 @@ $productDataJson = htmlspecialchars(json_encode([
             alert('Đã thêm vào giỏ hàng');
             // Cập nhật hiển thị giỏ hàng
             updateCartDisplay();
+            // Cập nhật hiển thị giỏ hàng toàn cục
+           
         }
     </script>
 </body>
