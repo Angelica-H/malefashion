@@ -33,6 +33,11 @@
                                             <i class="metismenu-icon"></i>Brand
                                         </a>
                                     </li>
+                                    <li>
+                                        <a href="./product-sku.php">
+                                            <i class="metismenu-icon"></i>Product SKU
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
                         </ul>

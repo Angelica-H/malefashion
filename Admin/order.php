@@ -2,41 +2,73 @@
  require 'process/config.php';
  require 'process/check_admin_session.php';
  checkAdminSession();
- // Truy vấn để lấy thông tin đơn hàng
-$sql = "SELECT o.order_id, o.order_date, o.total, o.status, o.shipping_address, o.payment_method,
-c.first_name, c.last_name, c.phone_number,
-(SELECT GROUP_CONCAT(p.product_name SEPARATOR ', ')
- FROM order_items oi
- JOIN product_variants pv ON oi.variant_id = pv.variant_id
- JOIN products p ON pv.product_id = p.product_id
- WHERE oi.order_id = o.order_id) AS product_list
-FROM orders o
-JOIN customers c ON o.customer_id = c.customer_id
-ORDER BY o.order_date DESC";
+ // Xử lý các tham số tìm kiếm, lọc và sắp xếp
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+$status = isset($_GET['status']) ? $_GET['status'] : '';
+$sort = isset($_GET['sort']) ? $_GET['sort'] : 'order_date';
+$order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
+
+// Xây dựng câu truy vấn SQL
+$sql = "SELECT o.order_id, o.order_date, o.total, o.status, o.payment_method,
+               c.first_name, c.last_name,
+               (SELECT GROUP_CONCAT(p.product_name SEPARATOR ', ')
+                FROM order_items oi
+                JOIN product_variants pv ON oi.variant_id = pv.variant_id
+                JOIN products p ON pv.product_id = p.product_id
+                WHERE oi.order_id = o.order_id) AS product_list
+        FROM orders o
+        JOIN customers c ON o.customer_id = c.customer_id
+        WHERE 1=1";
+
+if (!empty($search)) {
+    $sql .= " AND (o.order_id LIKE :search OR c.first_name LIKE :search OR c.last_name LIKE :search)";
+}
+
+if (!empty($status)) {
+    $sql .= " AND o.status = :status";
+}
+
+$sql .= " ORDER BY $sort $order";
 
 // Phân trang
 $items_per_page = 10;
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $items_per_page;
 
-// Thêm LIMIT và OFFSET vào câu truy vấn
 $sql .= " LIMIT :limit OFFSET :offset";
 
 try {
-$stmt = $pdo->prepare($sql);
-$stmt->bindValue(':limit', $items_per_page, PDO::PARAM_INT);
-$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-$stmt->execute();
-$orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt = $pdo->prepare($sql);
+    if (!empty($search)) {
+        $stmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+    }
+    if (!empty($status)) {
+        $stmt->bindValue(':status', $status, PDO::PARAM_STR);
+    }
+    $stmt->bindValue(':limit', $items_per_page, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Đếm tổng số đơn hàng
-$count_sql = "SELECT COUNT(*) FROM orders";
-$count_stmt = $pdo->query($count_sql);
-$total_items = $count_stmt->fetchColumn();
-$total_pages = ceil($total_items / $items_per_page);
+    // Đếm tổng số đơn hàng (không có LIMIT)
+    $count_sql = preg_replace('/SELECT.*?FROM/', 'SELECT COUNT(*) FROM', $sql);
+    $count_sql = preg_replace('/ORDER BY.*$/', '', $count_sql);
+    $count_stmt = $pdo->prepare($count_sql);
+    if (!empty($search)) {
+        $count_stmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+    }
+    if (!empty($status)) {
+        $count_stmt->bindValue(':status', $status, PDO::PARAM_STR);
+    }
+    $count_stmt->execute();
+    $total_items = $count_stmt->fetchColumn();
+    $total_pages = ceil($total_items / $items_per_page);
 } catch (PDOException $e) {
-die("Query failed: " . $e->getMessage());
+    die("Query failed: " . $e->getMessage());
 }
+
+$statuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+
 ?>
  
  <!doctype html>
@@ -561,68 +593,80 @@ die("Query failed: " . $e->getMessage());
                     </div>
 
                     <div class="row">
-                    <div class="col-md-12">
-                    <div class="main-card mb-3 card">
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="mb-0 table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Order ID</th>
-                                            <th>Customer</th>
-                                            <th>Products</th>
-                                            <th>Total</th>
-                                            <th>Status</th>
-                                            <th>Payment Method</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($orders as $order): ?>
-                                        <tr>
-                                            <td><strong>#<?php echo $order['order_id']; ?></strong></td>
-                                            <td><?php echo htmlspecialchars($order['first_name'] . ' ' . $order['last_name']); ?></td>
-                                            <td>
-                                                <small><?php echo htmlspecialchars(substr($order['product_list'], 0, 50) . '...'); ?></small>
-                                            </td>
-                                            <td><strong><?php echo number_format($order['total'], 0, ',', '.') . ' ₫'; ?></strong></td>
-                                            <td>
-                                                <select class="form-control status-select" data-order-id="<?php echo $order['order_id']; ?>" style="width: auto; min-width: 120px; font-size: 0.9em; padding: 0.2em;">
-                                                    <?php
-                                                    $statuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
-                                                    $classes = ['warning', 'primary', 'info', 'success', 'danger'];
-                                                    foreach ($statuses as $index => $status) {
-                                                        $selected = ($order['status'] == $status) ? 'selected' : '';
-                                                        echo "<option value=\"$status\" data-class=\"{$classes[$index]}\" $selected>$status</option>";
-                                                    }
-                                                    ?>
-                                                </select>
-                                            </td>
-                                            <td><?php echo htmlspecialchars($order['payment_method']); ?></td>
-                                            <td>
-                                                <a href="order-show.php?id=<?php echo $order['order_id']; ?>" class="btn btn-primary btn-sm">
-                                                    <i class="fa fa-info-circle"></i> Details
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <nav>
-                        <ul class="pagination justify-content-center">
-                            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
-                                    <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
-                                </li>
-                            <?php endfor; ?>
-                        </ul>
-                    </nav>
+    <div class="col-md-12">
+        <div class="main-card mb-3 card">
+            <div class="card-body">
+                <form method="GET" class="form-inline mb-3">
+                    <input type="text" name="search" class="form-control mr-2" placeholder="Search orders" value="<?php echo htmlspecialchars($search); ?>">
+                    <select name="status" class="form-control mr-2">
+                        <option value="">All Statuses</option>
+                        <?php foreach ($statuses as $s): ?>
+                            <option value="<?php echo $s; ?>" <?php echo ($status == $s) ? 'selected' : ''; ?>><?php echo $s; ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <select name="sort" class="form-control mr-2">
+                        <option value="order_date" <?php echo ($sort == 'order_date') ? 'selected' : ''; ?>>Order Date</option>
+                        <option value="total" <?php echo ($sort == 'total') ? 'selected' : ''; ?>>Total</option>
+                    </select>
+                    <select name="order" class="form-control mr-2">
+                        <option value="DESC" <?php echo ($order == 'DESC') ? 'selected' : ''; ?>>Descending</option>
+                        <option value="ASC" <?php echo ($order == 'ASC') ? 'selected' : ''; ?>>Ascending</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </form>
+
+                <div class="table-responsive">
+                    <table id="orders-table" class="mb-0 table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Products</th>
+                                <th>Date</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Payment Method</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-list">
+                            <?php foreach ($orders as $order): ?>
+                            <tr>
+                                <td><strong>#<?php echo $order['order_id']; ?></strong></td>
+                                <td><?php echo htmlspecialchars($order['first_name'] . ' ' . $order['last_name']); ?></td>
+                                <td>
+                                    <small title="<?php echo htmlspecialchars($order['product_list']); ?>">
+                                        <?php echo htmlspecialchars(mb_strimwidth($order['product_list'], 0, 50, "...")); ?>
+                                    </small>
+                                </td>
+                                <td><?php echo date('d/m/Y', strtotime($order['order_date'])); ?></td>
+                                <td><strong><?php echo number_format($order['total'], 0, ',', '.') . ' ₫'; ?></strong></td>
+                                <td>
+                                    <select class="form-control status-select" data-order-id="<?php echo $order['order_id']; ?>" style="width: auto; min-width: 120px; font-size: 0.9em; padding: 0.2em;">
+                                        <?php
+                                        $classes = ['warning', 'primary', 'info', 'success', 'danger'];
+                                        foreach ($statuses as $index => $s) {
+                                            $selected = ($order['status'] == $s) ? 'selected' : '';
+                                            echo "<option value=\"$s\" data-class=\"{$classes[$index]}\" $selected>$s</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                </td>
+                                <td><?php echo htmlspecialchars($order['payment_method']); ?></td>
+                                <td>
+                                    <a href="order-show.php?id=<?php echo $order['order_id']; ?>" class="btn btn-primary btn-sm">
+                                        <i class="fa fa-info-circle"></i> Details
+                                    </a>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
-             
             </div>
+        </div>
+    </div>
+</div>
         </div>
     </div>
     
@@ -1805,38 +1849,13 @@ die("Query failed: " . $e->getMessage());
     <script type="text/javascript" src="./assets/scripts/my_script.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-    $(document).ready(function() {
-        $('.status-select').change(function() {
-            var orderId = $(this).data('order-id');
-            var newStatus = $(this).val();
-            
-            $.ajax({
-                url: 'process/update_order_status.php',
-                method: 'POST',
-                data: {
-                    order_id: orderId,
-                    status: newStatus
-                },
-                success: function(response) {
-                    if (response === 'success') {
-                        alert('Order status updated successfully');
-                    } else {
-                        alert('Failed to update order status');
-                    }
-                },
-                error: function() {
-                    alert('An error occurred while updating the order status');
-                }
-            });
-        });
-    });
-    $(document).ready(function() {
-    function updateSelectColor(select) {
-        var selectedOption = $(select).find('option:selected');
-        var bgClass = 'bg-' + selectedOption.data('class');
-        var textClass = 'text-' + (selectedOption.data('class') === 'warning' ? 'dark' : 'white');
-        
-        $(select).removeClass('bg-warning bg-primary bg-info bg-success bg-danger')
+        $(document).ready(function() {  
+            function updateSelectColor(select) {
+                var selectedOption = $(select).find('option:selected');
+                var bgClass = 'bg-' + selectedOption.data('class');
+                var textClass = 'text-' + (selectedOption.data('class') === 'warning' ? 'dark' : 'white');
+                
+                            $(select).removeClass('bg-warning bg-primary bg-info bg-success bg-danger')
                  .removeClass('text-dark text-white')
                  .addClass(bgClass)
                  .addClass(textClass);
@@ -1872,8 +1891,7 @@ die("Query failed: " . $e->getMessage());
         });
     });
 });
-
-    </script>
+</script>
 </body>
 
 </html>

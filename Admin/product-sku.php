@@ -2,55 +2,75 @@
  require 'process/config.php';
  require 'process/check_admin_session.php';
  checkAdminSession();
- // Xử lý tìm kiếm, sắp xếp và phân trang
+ 
+// Xử lý các tham số tìm kiếm, lọc và sắp xếp
 $search = isset($_GET['search']) ? $_GET['search'] : '';
-$sort = isset($_GET['sort']) ? $_GET['sort'] : 'product_id';
+$sku_filter = isset($_GET['sku']) ? $_GET['sku'] : '';
+$sort = isset($_GET['sort']) ? $_GET['sort'] : 'p.created_at';
 $order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
+
+// Phân trang
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit = 10; // Số sản phẩm trên mỗi trang
-$offset = ($page - 1) * $limit;
+$perPage = 10; // Số sản phẩm trên mỗi trang
+$offset = ($page - 1) * $perPage;
 
-// Xây dựng câu truy vấn
-$query = "SELECT p.*, b.brand_name, c.category_name, 
-          (SELECT SUM(stock) FROM product_variants WHERE product_id = p.product_id) as total_stock
-          FROM products p
-          LEFT JOIN brands b ON p.brand_id = b.brand_id
-          LEFT JOIN categories c ON p.category_id = c.category_id
-          WHERE p.product_name LIKE :search OR b.brand_name LIKE :search
-          ORDER BY $sort $order
-          LIMIT :limit OFFSET :offset";
+// Xây dựng câu truy vấn SQL
+$sql = "SELECT p.product_id, p.product_name, p.product_image, p.price, p.is_best_seller, 
+               b.brand_name, s.sku_code, s.stock,
+               SUM(s.stock) as total_stock
+        FROM products p
+        LEFT JOIN brands b ON p.brand_id = b.brand_id
+        LEFT JOIN sku s ON p.product_id = s.product_id
+        WHERE 1=1";
 
-$countQuery = "SELECT COUNT(*) FROM products p
-               LEFT JOIN brands b ON p.brand_id = b.brand_id
-               WHERE p.product_name LIKE :search OR b.brand_name LIKE :search";
-
-$stmt = $pdo->prepare($query);
-$countStmt = $pdo->prepare($countQuery);
-
-$searchParam = "%$search%";
-$stmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
-$stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-$stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-$countStmt->bindParam(':search', $searchParam, PDO::PARAM_STR);
-
-$stmt->execute();
-$countStmt->execute();
-
-$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$totalProducts = $countStmt->fetchColumn();
-$totalPages = ceil($totalProducts / $limit);
-
-// Xử lý xóa sản phẩm
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
-    $productId = $_POST['id'];
-    $deleteStmt = $pdo->prepare("DELETE FROM products WHERE product_id = ?");
-    if ($deleteStmt->execute([$productId])) {
-        // Chuyển hướng để tránh gửi lại form khi refresh
-        header("Location: product.php?deleted=1");
-        exit;
-    }
+if (!empty($search)) {
+    $sql .= " AND (p.product_name LIKE :search OR b.brand_name LIKE :search OR s.sku_code LIKE :search)";
 }
-?>
+
+if (!empty($sku_filter)) {
+    $sql .= " AND s.sku_code = :sku_filter";
+}
+
+$sql .= " GROUP BY p.product_id";
+$sql .= " ORDER BY $sort $order";
+$sql .= " LIMIT :limit OFFSET :offset";
+
+// Chuẩn bị và thực thi truy vấn
+$stmt = $pdo->prepare($sql);
+if (!empty($search)) {
+    $stmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+}
+if (!empty($sku_filter)) {
+    $stmt->bindValue(':sku_filter', $sku_filter, PDO::PARAM_STR);
+}
+$stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
+$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Lấy tổng số sản phẩm để tính số trang
+$countSql = "SELECT COUNT(DISTINCT p.product_id) as total FROM products p LEFT JOIN sku s ON p.product_id = s.product_id WHERE 1=1";
+if (!empty($search)) {
+    $countSql .= " AND (p.product_name LIKE :search OR s.sku_code LIKE :search)";
+}
+if (!empty($sku_filter)) {
+    $countSql .= " AND s.sku_code = :sku_filter";
+}
+$countStmt = $pdo->prepare($countSql);
+if (!empty($search)) {
+    $countStmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+}
+if (!empty($sku_filter)) {
+    $countStmt->bindValue(':sku_filter', $sku_filter, PDO::PARAM_STR);
+}
+$countStmt->execute();
+$totalProducts = $countStmt->fetchColumn();
+$totalPages = ceil($totalProducts / $perPage);
+
+// Lấy danh sách tất cả SKU để hiển thị trong bộ lọc
+$sku_list_sql = "SELECT DISTINCT sku_code FROM sku ORDER BY sku_code";
+$sku_list_stmt = $pdo->query($sku_list_sql);
+$sku_list = $sku_list_stmt->fetchAll(PDO::FETCH_COLUMN);
 ?>
  <!doctype html>
 <html lang="en">
@@ -584,122 +604,131 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
                     <div class="row">
                         <div class="col-md-12">
                         <div class="main-card mb-3 card">
-    <div class="card-header">
-        <form action="" method="GET">
-            <div class="input-group">
-                <input type="search" name="search" id="search"
-                    placeholder="Tìm kiếm sản phẩm" class="form-control" 
-                    value="<?php echo htmlspecialchars($search); ?>">
-                <span class="input-group-append">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-search"></i>&nbsp;
-                        Tìm kiếm
-                    </button>
-                </span>
-            </div>
-        </form>
+                        <div class="card-header">
+    <form action="" method="GET">
+        <div class="input-group">
+            <input type="search" name="search" id="search"
+                placeholder="Tìm kiếm sản phẩm" class="form-control" 
+                value="<?php echo htmlspecialchars($search); ?>">
+            <select name="sku" class="form-control">
+                <option value="">Tất cả SKU</option>
+                <?php foreach ($sku_list as $sku): ?>
+                    <option value="<?php echo htmlspecialchars($sku); ?>" <?php echo $sku_filter == $sku ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($sku); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <span class="input-group-append">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-search"></i>&nbsp;
+                    Tìm kiếm
+                </button>
+            </span>
+        </div>
+    </form>
 
-        <div class="btn-actions-pane-right">
-            <div role="group" class="btn-group-sm btn-group">
-                <a href="?sort=created_at&order=<?php echo $sort == 'created_at' && $order == 'DESC' ? 'ASC' : 'DESC'; ?>" 
-                   class="btn btn-focus">Sắp xếp theo Ngày</a>
-                <a href="?sort=price&order=<?php echo $sort == 'price' && $order == 'DESC' ? 'ASC' : 'DESC'; ?>" 
-                   class="btn btn-focus">Sắp xếp theo Giá</a>
-                <a href="?sort=product_name&order=<?php echo $sort == 'product_name' && $order == 'DESC' ? 'ASC' : 'DESC'; ?>" 
-                   class="btn btn-focus">Sắp xếp theo Tên</a>
-            </div>
+    <div class="btn-actions-pane-right">
+        <div role="group" class="btn-group-sm btn-group">
+            <a href="?sort=p.created_at&order=<?php echo $sort == 'p.created_at' && $order == 'DESC' ? 'ASC' : 'DESC'; ?>&search=<?php echo urlencode($search); ?>&sku=<?php echo urlencode($sku_filter); ?>" 
+               class="btn btn-focus">Sắp xếp theo Ngày</a>
+            <a href="?sort=p.price&order=<?php echo $sort == 'p.price' && $order == 'DESC' ? 'ASC' : 'DESC'; ?>&search=<?php echo urlencode($search); ?>&sku=<?php echo urlencode($sku_filter); ?>" 
+               class="btn btn-focus">Sắp xếp theo Giá</a>
+            <a href="?sort=p.product_name&order=<?php echo $sort == 'p.product_name' && $order == 'DESC' ? 'ASC' : 'DESC'; ?>&search=<?php echo urlencode($search); ?>&sku=<?php echo urlencode($sku_filter); ?>" 
+               class="btn btn-focus">Sắp xếp theo Tên</a>
         </div>
     </div>
+</div>
 
-    <div class="table-responsive">
-        <table class="align-middle mb-0 table table-borderless table-striped table-hover">
-            <thead>
+<div class="table-responsive">
+    <table class="align-middle mb-0 table table-borderless table-striped table-hover">
+        <thead>
+            <tr>
+                <th class="text-center">ID</th>
+                <th>Tên / Thương hiệu</th>
+                <th class="text-center">SKU</th>
+                <th class="text-center">Giá</th>
+                <th class="text-center">Số lượng</th>
+                <th class="text-center">Nổi bật</th>
+                <th class="text-center">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($products as $product): ?>
                 <tr>
-                    <th class="text-center">ID</th>
-                    <th>Tên / Thương hiệu</th>
-                    <th class="text-center">Giá</th>
-                    <th class="text-center">Số lượng</th>
-                    <th class="text-center">Nổi bật</th>
-                    <th class="text-center">Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($products as $product): ?>
-                    <tr>
-                        <td class="text-center text-muted">#<?php echo $product['product_id']; ?></td>
-                        <td>
-                            <div class="widget-content p-0">
-                                <div class="widget-content-wrapper">
-                                    <div class="widget-content-left mr-3">
-                                        <div class="widget-content-left">
-                                            <img style="height: 60px;"
-                                                data-toggle="tooltip" title="Hình ảnh"
-                                                data-placement="bottom"
-                                                src="<?php echo htmlspecialchars('/malefashion/' . $product['product_image']); ?>" alt="">
-                                        </div>
+                    <td class="text-center text-muted">#<?php echo $product['product_id']; ?></td>
+                    <td>
+                        <div class="widget-content p-0">
+                            <div class="widget-content-wrapper">
+                                <div class="widget-content-left mr-3">
+                                    <div class="widget-content-left">
+                                        <img style="height: 60px;"
+                                            data-toggle="tooltip" title="Hình ảnh"
+                                            data-placement="bottom"
+                                            src="<?php echo htmlspecialchars('/malefashion/' . $product['product_image']); ?>" alt="">
                                     </div>
-                                    <div class="widget-content-left flex2">
-                                        <div class="widget-heading"><?php echo htmlspecialchars($product['product_name']); ?></div>
-                                        <div class="widget-subheading opacity-7">
-                                            <?php echo htmlspecialchars($product['brand_name']); ?>
-                                        </div>
+                                </div>
+                                <div class="widget-content-left flex2">
+                                    <div class="widget-heading"><?php echo htmlspecialchars($product['product_name']); ?></div>
+                                    <div class="widget-subheading opacity-7">
+                                        <?php echo htmlspecialchars($product['brand_name']); ?>
                                     </div>
                                 </div>
                             </div>
-                        </td>
-                        <td class="text-center"><?php echo number_format($product['price'], 0, ',', '.'); ?> đ</td>
-                        <td class="text-center"><?php echo $product['total_stock']; ?></td>
-                        <td class="text-center">
-                            <div class="badge badge-<?php echo $product['is_best_seller'] ? 'success' : 'secondary'; ?> mt-2">
-                                <?php echo $product['is_best_seller'] ? 'Có' : 'Không'; ?>
-                            </div>
-                        </td>
-                        <td class="text-center">
-                            <a href="./product-show.php?id=<?php echo $product['product_id']; ?>"
-                                class="btn btn-hover-shine btn-outline-primary border-0 btn-sm">
-                                Chi tiết
-                            </a>
-                            <a href="./product-edit.php?id=<?php echo $product['product_id']; ?>" data-toggle="tooltip" title="Sửa"
-                                data-placement="bottom" class="btn btn-outline-warning border-0 btn-sm">
+                        </div>
+                    </td>
+                    <td class="text-center"><?php echo htmlspecialchars($product['sku_code']); ?></td>
+                    <td class="text-center"><?php echo number_format($product['price'], 0, ',', '.'); ?> đ</td>
+                    <td class="text-center"><?php echo $product['total_stock']; ?></td>
+                    <td class="text-center">
+                        <div class="badge badge-<?php echo $product['is_best_seller'] ? 'success' : 'secondary'; ?> mt-2">
+                            <?php echo $product['is_best_seller'] ? 'Có' : 'Không'; ?>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <a href="./product-show.php?id=<?php echo $product['product_id']; ?>"
+                            class="btn btn-hover-shine btn-outline-primary border-0 btn-sm">
+                            Chi tiết
+                        </a>
+                        <a href="./product-edit.php?id=<?php echo $product['product_id']; ?>" data-toggle="tooltip" title="Sửa"
+                            data-placement="bottom" class="btn btn-outline-warning border-0 btn-sm">
+                            <span class="btn-icon-wrapper opacity-8">
+                                <i class="fa fa-edit fa-w-20"></i>
+                            </span>
+                        </a>
+                        <form class="d-inline" action="" method="post">
+                            <input type="hidden" name="id" value="<?php echo $product['product_id']; ?>">
+                            <button class="btn btn-hover-shine btn-outline-danger border-0 btn-sm"
+                                type="submit" data-toggle="tooltip" title="Xóa"
+                                data-placement="bottom"
+                                onclick="return confirm('Bạn có chắc chắn muốn xóa mục này?')">
                                 <span class="btn-icon-wrapper opacity-8">
-                                    <i class="fa fa-edit fa-w-20"></i>
+                                    <i class="fa fa-trash fa-w-20"></i>
                                 </span>
-                            </a>
-                            <form class="d-inline" action="" method="post">
-                                <input type="hidden" name="id" value="<?php echo $product['product_id']; ?>">
-                                <button class="btn btn-hover-shine btn-outline-danger border-0 btn-sm"
-                                    type="submit" data-toggle="tooltip" title="Xóa"
-                                    data-placement="bottom"
-                                    onclick="return confirm('Bạn có chắc chắn muốn xóa mục này?')">
-                                    <span class="btn-icon-wrapper opacity-8">
-                                        <i class="fa fa-trash fa-w-20"></i>
-                                    </span>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
 
-    <div class="d-block card-footer">
-        <nav aria-label="Phân trang">
-            <ul class="pagination justify-content-center">
-                <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
-                    <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>">Trước</a>
+<div class="d-block card-footer">
+    <nav aria-label="Phân trang">
+        <ul class="pagination justify-content-center">
+            <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&sku=<?php echo urlencode($sku_filter); ?>&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>">Trước</a>
+            </li>
+            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                <li class="page-item <?php echo $page == $i ? 'active' : ''; ?>">
+                    <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&sku=<?php echo urlencode($sku_filter); ?>&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>"><?php echo $i; ?></a>
                 </li>
-                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                    <li class="page-item <?php echo $page == $i ? 'active' : ''; ?>">
-                        <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>"><?php echo $i; ?></a>
-                    </li>
-                <?php endfor; ?>
-                <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
-                    <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>">Sau</a>
-                </li>
-            </ul>
-        </nav>
-    </div>
+            <?php endfor; ?>
+            <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
+                <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&sku=<?php echo urlencode($sku_filter); ?>&sort=<?php echo $sort; ?>&order=<?php echo $order; ?>">Sau</a>
+            </li>
+        </ul>
+    </nav>
 </div>
                         </div>
                     </div>
