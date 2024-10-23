@@ -65,7 +65,41 @@ $productDataJson = htmlspecialchars(json_encode([
     'image' => $product['product_image'],
     'variants' => $productVariants
 ]), ENT_QUOTES, 'UTF-8');
+//
+// Lấy đánh giá sản phẩm
+$reviewQuery = "SELECT pr.*, c.first_name, c.last_name 
+                FROM product_reviews pr 
+                JOIN customers c ON pr.customer_id = c.customer_id 
+                WHERE pr.product_id = ?
+                ORDER BY pr.created_at DESC";
+$stmt = $conn->prepare($reviewQuery);
+$stmt->bind_param("i", $product_id);
+$stmt->execute();
+$reviewResult = $stmt->get_result();
+$reviews = $reviewResult->fetch_all(MYSQLI_ASSOC);
 
+// Tính rating trung bình
+$avgRatingQuery = "SELECT AVG(rating) as avg_rating FROM product_reviews WHERE product_id = ?";
+$stmt = $conn->prepare($avgRatingQuery);
+$stmt->bind_param("i", $product_id);
+$stmt->execute();
+$avgRatingResult = $stmt->get_result();
+$avgRating = $avgRatingResult->fetch_assoc()['avg_rating'];
+
+// Giả sử $product là mảng chứa thông tin sản phẩm, bao gồm avg_rating
+$avgRating = $product['avg_rating'];
+$fullStars = floor($avgRating);
+$halfStar = $avgRating - $fullStars >= 0.5;
+$emptyStars = 5 - $fullStars - ($halfStar ? 1 : 0);
+
+// Đếm số lượng đánh giá
+$reviewCountQuery = "SELECT COUNT(*) as review_count FROM product_reviews WHERE product_id = ?";
+$stmt = $conn->prepare($reviewCountQuery);
+$stmt->bind_param("i", $product['product_id']);
+$stmt->execute();
+$result = $stmt->get_result();
+$reviewCount = $result->fetch_assoc()['review_count'];
+$stmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="zxx">
@@ -141,13 +175,24 @@ $productDataJson = htmlspecialchars(json_encode([
             <div class="product__details__text">
                 <h4><?php echo htmlspecialchars($product['product_name']); ?></h4>
                 <div class="rating">
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star"></i>
-                    <i class="fa fa-star-o"></i>
-                    <span> - 5 Reviews</span>
-                </div>
+    <?php
+    // Hiển thị sao đầy
+    for ($i = 0; $i < $fullStars; $i++) {
+        echo '<i class="fa fa-star"></i>';
+    }
+    
+    // Hiển thị nửa sao (nếu có)
+    if ($halfStar) {
+        echo '<i class="fa fa-star-half-o"></i>';
+    }
+    
+    // Hiển thị sao rỗng
+    for ($i = 0; $i < $emptyStars; $i++) {
+        echo '<i class="fa fa-star-o"></i>';
+    }
+    ?>
+    <span> - <?php echo number_format($avgRating, 1); ?> / 5 (<?php echo $reviewCount; ?> đánh giá)</span>
+</div>
                 <h3>
                     <?php if ($product['sale_price'] && $product['sale_price'] < $product['price']): ?>
                         <?php echo number_format($product['sale_price'], 0, ',', '.'); ?>đ
@@ -217,41 +262,122 @@ $productDataJson = htmlspecialchars(json_encode([
 </div>
                 </div>
                 <div class="row">
-                    <div class="col-lg-12">
-                        <div class="product__details__tab">
-                            <ul class="nav nav-tabs" role="tablist">
-                                <!-- <li class="nav-item">
-                                    <a class="nav-link active" data-toggle="tab" href="#tabs-5" role="tab">Mô Tả</a>
-                                </li>
-                                --> 
-                                <li class="nav-item">
-                                    <a class="nav-link" data-toggle="tab" href="#tabs-6" role="tab">Đánh Giá Khách
-                                        Hàng</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" data-toggle="tab" href="#tabs-7" role="tab">Thông Tin Thêm</a>
-                                </li>
-                            </ul>
-                            <div class="tab-content">
-                                <div class="tab-pane active" id="tabs-5" role="tabpanel">
-                                    <div class="product__details__tab__content">
-                                        <p class="note">Thông tin mô tả sản phẩm tại đây...</p>
-                                    </div>
-                                </div>
-                                <div class="tab-pane" id="tabs-6" role="tabpanel">
-                                    <div class="product__details__tab__content">
-                                        <p>Đánh giá từ khách hàng...</p>
-                                    </div>
-                                </div>
-                                <div class="tab-pane" id="tabs-7" role="tabpanel">
-                                    <div class="product__details__tab__content">
-                                        <p>Thông tin thêm về sản phẩm...</p>
+    <div class="col-lg-12">
+        <div class="product__details__tab">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#tabs-5" role="tab">Mô tả</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#tabs-6" role="tab">Đánh Giá Khách Hàng</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#tabs-7" role="tab">Thông Tin Thêm</a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane active" id="tabs-5" role="tabpanel">
+                    <div class="product__details__tab__content">
+                        <p class="note"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
+                    </div>
+                </div>
+                <div class="tab-pane" id="tabs-6" role="tabpanel">
+                    <div class="product__details__tab__content">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h4 class="card-title">Đánh giá trung bình</h4>
+                                        <div class="d-flex align-items-center mb-3">
+                                            <h2 class="mb-0 mr-2"><?php echo number_format($avgRating, 1); ?></h2>
+                                            <div class="star-rating">
+                                                <?php
+                                                for ($i = 1; $i <= 5; $i++) {
+                                                    if ($i <= $avgRating) {
+                                                        echo '<i class="fa fa-star text-warning"></i>';
+                                                    } elseif ($i - 0.5 <= $avgRating) {
+                                                        echo '<i class="fa fa-star-half-o text-warning"></i>';
+                                                    } else {
+                                                        echo '<i class="fa fa-star-o text-warning"></i>';
+                                                    }
+                                                }
+                                                ?>
+                                            </div>
+                                        </div>
+                                        <p class="text-muted">Dựa trên <?php echo $reviewCount; ?> đánh giá</p>
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <?php if (isset($_SESSION['customer_id'])): ?>
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Đánh giá sản phẩm</h5>
+                                            <form action="includes/add_review.php" method="POST" class="review-form">
+                                                <input type="hidden" name="product_id" value="<?php echo $product_id; ?>">
+                                                <div class="form-group">
+                                                    <label for="rating">Đánh giá của bạn:</label>
+                                                    <select name="rating" id="rating" required class="form-control">
+                                                        <option value="">Chọn đánh giá</option>
+                                                        <option value="1">1 sao</option>
+                                                        <option value="2">2 sao</option>
+                                                        <option value="3">3 sao</option>
+                                                        <option value="4">4 sao</option>
+                                                        <option value="5">5 sao</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="comment">Nhận xét của bạn:</label>
+                                                    <textarea name="comment" id="comment" class="form-control" rows="3"></textarea>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Gửi đánh giá</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="alert alert-info" role="alert">
+                                        Vui lòng <a href="login.php" class="alert-link">đăng nhập</a> để đánh giá sản phẩm.
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <div class="reviews-list mt-4">
+                            <h5 class="mb-3">Đánh giá của khách hàng</h5>
+                            <?php foreach ($reviews as $review): ?>
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="card-subtitle mb-0"><?php echo htmlspecialchars($review['first_name'] . ' ' . $review['last_name']); ?></h6>
+                                            <small class="text-muted">Ngày đăng: <?php echo date('d/m/Y', strtotime($review['created_at'])); ?></small>
+                                        </div>
+                                        <div class="mb-2">
+                                            <?php
+                                            for ($i = 1; $i <= 5; $i++) {
+                                                if ($i <= $review['rating']) {
+                                                    echo '<i class="fa fa-star text-warning"></i>';
+                                                } else {
+                                                    echo '<i class="fa fa-star-o text-warning"></i>';
+                                                }
+                                            }
+                                            ?>
+                                        </div>
+                                        <p class="card-text"><?php echo nl2br(htmlspecialchars($review['comment'])); ?></p>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                 </div>
+                <div class="tab-pane" id="tabs-7" role="tabpanel">
+                    <div class="product__details__tab__content">
+                        <p>Thông tin thêm về sản phẩm...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             </div>
     </section>
 

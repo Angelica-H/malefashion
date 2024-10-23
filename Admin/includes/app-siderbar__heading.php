@@ -24,6 +24,11 @@
                                         </a>
                                     </li>
                                     <li>
+                                        <a href="./product-sku.php">
+                                            <i class="metismenu-icon"></i>Product SKU
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a href="./category.php">
                                             <i class="metismenu-icon"></i>Category
                                         </a>
@@ -33,9 +38,10 @@
                                             <i class="metismenu-icon"></i>Brand
                                         </a>
                                     </li>
+                                    
                                     <li>
-                                        <a href="./product-sku.php">
-                                            <i class="metismenu-icon"></i>Product SKU
+                                        <a href="./manage_reviews.php">
+                                            <i class="metismenu-icon"></i>Reviews
                                         </a>
                                     </li>
                                 </ul>

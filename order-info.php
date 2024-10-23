@@ -1,18 +1,23 @@
 <?php
-include 'includes/db_connect.php'; // Kết nối cơ sở dữ liệu
+include 'includes/db_connect.php';
 session_start();
+
+// Kiểm tra xem người dùng đã đăng nhập chưa
+if (!isset($_SESSION['customer_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
 // Kiểm tra kết nối
 if ($conn->connect_error) {
     die("Kết nối thất bại: " . $conn->connect_error);
-    // Kiểm tra kết nối
-if ($conn->connect_error) {
-    die("Kết nối thất bại: " . $conn->connect_error);
 }
+
+$customer_id = $_SESSION['customer_id'];
 
 $sql = "SELECT o.order_id, 
                o.order_date,
-               CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+               CONCAT(c.first_name, ' ', c.last_name) AS receiver_name,
                c.phone_number,
                o.shipping_address,
                o.total,
@@ -20,20 +25,13 @@ $sql = "SELECT o.order_id,
                o.payment_method
         FROM orders o
         JOIN customers c ON o.customer_id = c.customer_id
+        WHERE o.customer_id = ?
         ORDER BY o.order_date DESC";
-$result = $conn->query($sql);
-}
 
-$sql = "SELECT orders.order_id, 
-               CONCAT(customers.first_name, ' ', customers.last_name) AS receiver_name,
-               customers.shipping_address,
-               customers.phone_number,
-               orders.total,
-               orders.order_date,
-               orders.status
-        FROM orders
-        JOIN customers ON orders.customer_id = customers.customer_id";
-$result = $conn->query($sql);
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $customer_id);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
