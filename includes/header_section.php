@@ -36,14 +36,15 @@
                     <ul>
                         <li class="active"><a href="./index.php">Trang chủ</a></li>
                         <li><a href="./shop.php">Cửa hàng</a></li>
+                        <li><a href="./about.php">About Us</a></li>
                         <li><a href="#">Tài khoản</a>
                             <ul class="dropdown">
-                                <li><a href="./about.php">About Us</a></li>
+                                
                                 <li><a href="./account_details.php">Tài khoản</a></li>
                                 <li><a href="./shopping-cart.php">Giỏ hàng</a></li>
                                 <li><a href="./order-info.php">Đơn hàng</a></li>
                                 <li><a href="./checkout.php">Thanh toán</a></li>
-                                <li><a href="./blog-details.php">Blog Details</a></li>
+                                <!-- <li><a href="./blog-details.php">Blog Details</a></li> -->
                             </ul>
                         </li>
                        <!-- <li><a href="./blog.php">Blog</a></li>

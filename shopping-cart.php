@@ -131,11 +131,12 @@ session_start();
                                 <a href="shop.php">Continue Shopping</a>
                             </div>
                         </div>
-                        <div class="col-lg-6 col-md-6 col-sm-6">
+                       <!--   <div class="col-lg-6 col-md-6 col-sm-6">
                             <div class="continue__btn update__btn">
                                 <a href="#"><i class="fa fa-spinner"></i> Update cart</a>
                             </div>
-                        </div>
+                            </div>
+                        -->
                     </div>
                 </div>
             </div>
@@ -151,7 +152,7 @@ session_start();
                 <li>Phí ship <span id="shipping-fee">0 đ</span></li>
                 <li>Tổng cộng <span id="total-amount">0 đ</span></li>
             </ul>
-            <a href="checkout.php" class="primary-btn" >Tiến hành thanh toán</a>
+            <a href="javascript:void(0)" class="primary-btn" onclick="checkLoginAndRedirect()">Tiến hành thanh toán</a>
         </div>
     </div>
 </div>
@@ -177,6 +178,33 @@ session_start();
     <!-- Js Plugins -->
     <?php include "includes/js.php" ?>
     
+    <script>
+        function checkLoginAndRedirect() {
+    const isLoggedIn = <?php echo isset($_SESSION['customer_id']) ? 'true' : 'false'; ?>;
+    
+    if (!isLoggedIn) {
+        Swal.fire({
+            title: 'Yêu cầu đăng nhập',
+            text: 'Vui lòng đăng nhập để tiếp tục thanh toán.',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Đăng nhập',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Lưu URL để quay lại
+                localStorage.setItem('returnToCheckout', 'true');
+                
+                // Hiển thị modal đăng nhập
+                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                loginModal.show();
+            }
+        });
+    } else {
+        window.location.href = 'checkout.php';
+    }
+}
+    </script>
 
 </body>
 
