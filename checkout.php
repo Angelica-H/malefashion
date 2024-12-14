@@ -112,7 +112,7 @@ session_start();
                                             <label>Phương thức thanh toán</label>
                                         <select name="payment_method" required>
                                             <option value="COD">Thanh toán khi nhận hàng</option>
-                                            <option value="Bank Transfer">Chuyển khoản ngân hàng</option>
+                                            <option value="VNPAY">Chuyển khoản ngân hàng</option>
                                         </select>
                                     </label>
                                 </div>
@@ -180,7 +180,7 @@ session_start();
         totalAmountInput.value = total;
         cartDataInput.value = JSON.stringify(cart);
 
-        document.querySelector('form').addEventListener('submit', function(e) {
+        document.getElementById('checkout-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
             if (!<?php echo isset($_SESSION['customer_id']) ? 'true' : 'false'; ?>) {
@@ -194,7 +194,53 @@ session_start();
                 return;
             }
 
-            this.submit();
+            const formData = new FormData(this);
+            fetch('includes/process_order.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    if (data.payment_method === 'VNPAY') {
+                        const vnpayForm = document.createElement('form');
+                        vnpayForm.method = 'POST';  // Sử dụng POST thay vì GET
+                        vnpayForm.action = data.redirect_url;
+                        
+                        // Các tham số bắt buộc
+                        const params = {
+                            'order_id': data.order_id,        // Mã đơn hàng
+                            'amount': data.amount,            // Số tiền thanh toán
+                            'order_desc': 'Thanh toan don hang ' + data.order_id,  // Mô tả đơn hàng
+                            'bank_code': '',                  // Mã ngân hàng (có thể để trống)
+                            'language': 'vn'                  // Ngôn ngữ hiển thị
+                        };
+                        
+                        // Tạo các input fields
+                        for (let key in params) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = key;
+                            input.value = params[key];
+                            vnpayForm.appendChild(input);
+                        }
+                        
+                        document.body.appendChild(vnpayForm);
+                        vnpayForm.submit();
+                    } else {
+                        localStorage.removeItem('cart');
+                        alert(data.message);
+                        window.location.href = 'order_success.php?order_id=' + data.order_id;
+                    }
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra khi xử lý đơn hàng');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi xử lý đơn hàng');
+            });
         });
     });
     </script>
