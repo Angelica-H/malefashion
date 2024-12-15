@@ -4,10 +4,11 @@ include 'db_connect.php';
 if (isset($_POST['order_id'])) {
     $order_id = $_POST['order_id'];
     
-    // Lấy thông tin đơn hàng
-    $order_sql = "SELECT o.*, CONCAT(c.first_name, ' ', c.last_name) AS customer_name, c.phone_number
+    // Lấy thông tin đơn hàng và phương thức thanh toán từ bảng payments
+    $order_sql = "SELECT o.*, p.payment_method, CONCAT(c.first_name, ' ', c.last_name) AS customer_name, c.phone_number
                   FROM orders o
                   JOIN customers c ON o.customer_id = c.customer_id
+                  JOIN payments p ON o.order_id = p.order_id
                   WHERE o.order_id = ?";
     $stmt = $conn->prepare($order_sql);
     $stmt->bind_param("i", $order_id);
@@ -44,7 +45,7 @@ if (isset($_POST['order_id'])) {
     echo "<div class='col-md-6'>";
     echo "<p><strong>Ngày đặt hàng:</strong> " . date('d/m/Y H:i', strtotime($order['order_date'])) . "</p>";
     echo "<p><strong>Trạng thái:</strong> <span class='badge bg-" . ($order['status'] == 'Đã giao hàng' ? 'success' : 'warning') . "'>" . $order['status'] . "</span></p>";
-    echo "<p><strong>Phương thức thanh toán:</strong> " . $order['payment_method'] . "</p>";
+    echo "<p><strong>Phương thức thanh toán:</strong> " . $order['payment_method'] . "</p>"; // Lấy phương thức thanh toán từ bảng payments
     echo "</div>";
     echo "</div>";
     echo "</div>";

@@ -523,10 +523,9 @@
                         </div>
                     </div>
 
-                    <ul class="body-tabs body-tabs-layout tabs-animated body-tabs-animated nav">
+                    <!-- <ul class="body-tabs body-tabs-layout tabs-animated body-tabs-animated nav">
                         <li class="nav-item">
-                            <a href="./user-edit.php
-" class="nav-link">
+                            <a href="user-edit.php" class="nav-link">
                                 <span class="btn-icon-wrapper pr-2 opacity-8">
                                     <i class="fa fa-edit fa-w-20"></i>
                                 </span>
@@ -545,7 +544,7 @@
                                 </button>
                             </form>
                         </li>
-                    </ul>
+                    </ul> -->
 
                     <div class="row">
                         <div class="col-md-12">

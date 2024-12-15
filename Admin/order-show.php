@@ -11,10 +11,11 @@ $order_id = $_GET['id'];
 
 try {
     // Lấy thông tin đơn hàng
-    $order_sql = "SELECT o.*, c.first_name, c.last_name, c.email, c.phone_number
-                  FROM orders o
-                  JOIN customers c ON o.customer_id = c.customer_id
-                  WHERE o.order_id = :order_id";
+    $order_sql = "SELECT o.*, c.first_name, c.last_name, c.email, c.phone_number, p.payment_method, p.payment_date
+    FROM orders o
+    JOIN customers c ON o.customer_id = c.customer_id
+    JOIN payments p ON o.order_id = p.order_id
+    WHERE o.order_id = :order_id";
     $order_stmt = $pdo->prepare($order_sql);
     $order_stmt->execute([':order_id' => $order_id]);
     $order = $order_stmt->fetch(PDO::FETCH_ASSOC);
@@ -565,20 +566,20 @@ try {
                         <div class="col-md-12">
                         <div class="card mb-4">
     <div class="card-body">
-        <h2 class="card-title text-center mb-4">Order Details</h2>
+        <h2 class="card-title text-center mb-4">Chi Tiết Đơn Hàng</h2>
 
         <div class="table-responsive mb-5">
-            <h3 class="mb-3">Products List</h3>
+            <h3 class="mb-3">Danh Sách Sản Phẩm</h3>
             <table class="table table-striped table-hover">
                 <thead class="thead-light">
                     <tr>
-                        <th>Product</th>
-                        <th>SKU</th>
-                        <th>Size</th>
-                        <th>Color</th>
-                        <th class="text-center">Quantity</th>
-                        <th class="text-center">Unit Price</th>
-                        <th class="text-center">Total</th>
+                        <th>Sản Phẩm</th>
+                        <th>Mã SKU</th>
+                        <th>Kích Cỡ</th>
+                        <th>Màu Sắc</th>
+                        <th class="text-center">Số Lượng</th>
+                        <th class="text-center">Giá Đơn Vị</th>
+                        <th class="text-center">Tổng Cộng</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -602,11 +603,11 @@ try {
             </table>
         </div>
 
-        <h3 class="text-center mb-4">Order Info</h3>
+        <h3 class="text-center mb-4">Thông Tin Đơn Hàng</h3>
         <div class="row">
             <div class="col-md-6">
                 <div class="mb-3">
-                    <label class="font-weight-bold">Full Name:</label>
+                    <label class="font-weight-bold">Tên đầy đủ:</label>
                     <p><?php echo htmlspecialchars($order['first_name'] . ' ' . $order['last_name']); ?></p>
                 </div>
                 <div class="mb-3">
@@ -614,21 +615,25 @@ try {
                     <p><?php echo htmlspecialchars($order['email']); ?></p>
                 </div>
                 <div class="mb-3">
-                    <label class="font-weight-bold">Phone:</label>
+                    <label class="font-weight-bold">Số điện thoại:</label>
                     <p><?php echo htmlspecialchars($order['phone_number']); ?></p>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="mb-3">
-                    <label class="font-weight-bold">Shipping Address:</label>
+                    <label class="font-weight-bold">Địa chỉ giao hàng:</label>
                     <p><?php echo htmlspecialchars($order['shipping_address']); ?></p>
                 </div>
                 <div class="mb-3">
-                    <label class="font-weight-bold">Payment Method:</label>
+                    <label class="font-weight-bold">Phương thức thanh toán:</label>
                     <p><?php echo htmlspecialchars($order['payment_method']); ?></p>
                 </div>
                 <div class="mb-3">
-                    <label class="font-weight-bold">Status:</label>
+                    <label class="font-weight-bold">Ngày thanh toán:</label>
+                    <p><?php echo htmlspecialchars($order['payment_date']); ?></p>
+                </div>
+                <div class="mb-3">
+                    <label class="font-weight-bold">Trạng thái:</label>
                     <span class="badge badge-<?php echo getStatusClass($order['status']); ?>">
                         <?php echo htmlspecialchars($order['status']); ?>
                     </span>
@@ -638,13 +643,13 @@ try {
         <div class="row mt-4">
             <div class="col-md-6">
                 <div class="mb-3">
-                    <label class="font-weight-bold">Total:</label>
+                    <label class="font-weight-bold">Tổng cộng:</label>
                     <p class="h4"><?php echo number_format($order['total'], 0, ',', '.') . ' ₫'; ?></p>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="mb-3">
-                    <label class="font-weight-bold">Order Date:</label>
+                    <label class="font-weight-bold">Ngày đặt hàng:</label>
                     <p><?php echo date('d/m/Y H:i:s', strtotime($order['order_date'])); ?></p>
                 </div>
             </div>

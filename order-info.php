@@ -15,6 +15,7 @@ if ($conn->connect_error) {
 
 $customer_id = $_SESSION['customer_id'];
 
+// Cập nhật truy vấn SQL để lấy thông tin đơn hàng và phương thức thanh toán từ bảng payments
 $sql = "SELECT o.order_id, 
                o.order_date,
                CONCAT(c.first_name, ' ', c.last_name) AS receiver_name,
@@ -22,9 +23,10 @@ $sql = "SELECT o.order_id,
                o.shipping_address,
                o.total,
                o.status,
-               o.payment_method
+               p.payment_method
         FROM orders o
         JOIN customers c ON o.customer_id = c.customer_id
+        JOIN payments p ON o.order_id = p.order_id
         WHERE o.customer_id = ?
         ORDER BY o.order_date DESC";
 
@@ -69,6 +71,7 @@ $result = $stmt->get_result();
                     <th>Khách Hàng</th>
                     <th>Tổng Tiền</th>
                     <th>Trạng Thái</th>
+                    <th>Phương Thức Thanh Toán</th>
                     <th>Chi Tiết</th>
                 </tr>
             </thead>
@@ -82,6 +85,7 @@ $result = $stmt->get_result();
                         echo "<td class='align-middle'>" . ($row['receiver_name'] ?? 'N/A') . "</td>";
                         echo "<td class='align-middle'>" . number_format($row['total'], 0, ',', '.') . " đ</td>";
                         echo "<td class='align-middle'><span class='badge badge-" . ($row['status'] == 'Đã giao hàng' ? 'success' : 'warning') . "'>" . $row['status'] . "</span></td>";
+                        echo "<td class='align-middle'>" . ($row['payment_method'] ?? 'N/A') . "</td>";
                         echo "<td class='align-middle'>
                             <button class='btn btn-outline-info btn-sm view-details' data-id='" . $row['order_id'] . "'>
                                 <i class='fa fa-eye mr-1'></i> Xem Chi Tiết
@@ -90,15 +94,15 @@ $result = $stmt->get_result();
                         echo "</tr>";
                     }
                 } else {
-                    echo "<tr><td colspan='6' class='text-center text-muted'>Không có đơn hàng nào.</td></tr>";
+                    echo "<tr><td colspan='7' class='text-center text-muted'>Không có đơn hàng nào.</td></tr>";
                 }
                 ?>
             </tbody>
         </table>
     </div>
 
- <!-- Modal cho chi tiết đơn hàng -->
- <div class="modal fade" id="orderDetailsModal" tabindex="-1" role="dialog" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+    <!-- Modal cho chi tiết đơn hàng -->
+    <div class="modal fade" id="orderDetailsModal" tabindex="-1" role="dialog" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -114,9 +118,6 @@ $result = $stmt->get_result();
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
     $(document).ready(function() {
         $('.view-details').click(function() {

@@ -543,21 +543,21 @@
                                     <form>
                                         <div class="input-group">
                                             <input type="search" name="search" id="search"
-                                                placeholder="Search everything" class="form-control">
+                                                placeholder="Tìm kiếm mọi thứ" class="form-control">
                                             <span class="input-group-append">
                                                 <button type="submit" class="btn btn-primary">
                                                     <i class="fa fa-search"></i>&nbsp;
-                                                    Search
+                                                    Tìm kiếm
                                                 </button>
                                             </span>
                                         </div>
                                     </form>
 
                                     <div class="btn-actions-pane-right">
-                                        <div role="group" class="btn-group-sm btn-group">
-                                            <button class="btn btn-focus">This week</button>
-                                            <button class="active btn btn-focus">Anytime</button>
-                                        </div>
+                                       <!--  <div role="group" class="btn-group-sm btn-group">
+                                            <button class="btn btn-focus">Tuần này</button>
+                                            <button class="active btn btn-focus">Bất kỳ lúc nào</button>
+                                        </div> -->
                                     </div>
                                 </div>
                                 <?php
@@ -576,10 +576,11 @@
                                         <thead>
                                             <tr>
                                                 <th class="text-center">ID</th>
-                                                <th>Full Name</th>
+                                                <th>Tên đầy đủ</th>
                                                 <th class="text-center">Email</th>
-                                                <th class="text-center">Level</th>
-                                                <th class="text-center">Actions</th>
+                                                <th class="text-center">Cấp độ</th>
+                                                <th class="text-center">Ngày tạo</th>
+                                                <th class="text-center">Hành động</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -609,9 +610,11 @@
                                                     if ($isAdmin) {
                                                         $fullName = $user['username'];
                                                         $role = $user['role'];
+                                                        $createdAt = $user['created_at'];
                                                     } else {
                                                         $fullName = $user['first_name'] . ' ' . $user['last_name'];
                                                         $role = 'Customer';
+                                                        $createdAt = $user['created_at'];
                                                     }
                                                     
                                                     echo "<tr>
@@ -635,7 +638,12 @@
                                                         </td>
                                                         <td class=\"text-center\">{$user['email']}</td>
                                                         <td class=\"text-center\">
-                                                            {$role}
+                                                            <span class=\"badge badge-" . ($isAdmin ? 'success' : 'secondary') . "\">
+                                                                {$role}
+                                                            </span>
+                                                        </td>
+                                                        <td class=\"text-center\">
+                                                            " . date('d/m/Y H:i:s', strtotime($createdAt)) . "
                                                         </td>
                                                         <td class=\"text-center\">";
                                                     

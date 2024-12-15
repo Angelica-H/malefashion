@@ -32,7 +32,7 @@
                 </span>
             </div>
             <div class="app-header__content">
-                <div class="app-header-left">
+                <!-- <div class="app-header-left">
                     <div class="search-wrapper">
                         <div class="input-holder">
                             <input type="text" class="search-input" placeholder="Nhập từ khóa tìm kiếm">
@@ -209,9 +209,9 @@
                             </div>
                         </li>
                     </ul>
-                </div>
+                </div> -->
                 <div class="app-header-right">
-                    <div class="header-dots">
+                    <!-- <div class="header-dots">
                         <div class="dropdown">
                             <button type="button" aria-haspopup="true" aria-expanded="false" data-toggle="dropdown"
                                 class="p-0 mr-2 btn btn-link">
@@ -802,7 +802,7 @@
                                 </ul>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
 
                     <div class="header-btn-lg pr-0">
                         <div class="widget-content p-0">
@@ -922,9 +922,10 @@
                     </div>
                     <div class="header-btn-lg">
                         <button type="button" class="hamburger hamburger--elastic open-right-drawer">
-                            <span class="hamburger-box">
+                           <!-- <span class="hamburger-box">
                                 <span class="hamburger-inner"></span>
-                            </span>
+                            </span> 
+                        </button>-->
                         </button>
                     </div>
                 </div>

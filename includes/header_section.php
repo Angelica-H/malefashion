@@ -1,4 +1,7 @@
 
+<?php
+$current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+?>
 <header class="header">
 <div class="header__top">
         <div class="container">
@@ -32,26 +35,22 @@
                 </div>
             </div>
             <div class="col-lg-6 col-md-6">
-                <nav class="header__menu mobile-menu">
-                    <ul>
-                        <li class="active"><a href="./index.php">Trang chủ</a></li>
-                        <li><a href="./shop.php">Cửa hàng</a></li>
-                        <li><a href="./about.php">About Us</a></li>
-                        <li><a href="#">Tài khoản</a>
-                            <ul class="dropdown">
-                                
-                                <li><a href="./account_details.php">Tài khoản</a></li>
-                                <li><a href="./shopping-cart.php">Giỏ hàng</a></li>
-                                <li><a href="./order-info.php">Đơn hàng</a></li>
-                                <li><a href="./checkout.php">Thanh toán</a></li>
-                                <!-- <li><a href="./blog-details.php">Blog Details</a></li> -->
-                            </ul>
-                        </li>
-                       <!-- <li><a href="./blog.php">Blog</a></li>
-                        <li><a href="./contact.php">Contacts</a></li> -->
-                    </ul>
-                </nav>
-            </div>
+    <nav class="header__menu mobile-menu">
+        <ul>
+            <li class="<?php echo ($current_page == 'index.php') ? 'active' : ''; ?>"><a href="./index.php">Trang chủ</a></li>
+            <li class="<?php echo ($current_page == 'shop.php') ? 'active' : ''; ?>"><a href="./shop.php">Cửa hàng</a></li>
+            <li class="<?php echo ($current_page == 'about.php') ? 'active' : ''; ?>"><a href="./about.php">About Us</a></li>
+            <li class="<?php echo ($current_page == 'account_details.php' || $current_page == 'shopping-cart.php' || $current_page == 'order-info.php' || $current_page == 'checkout.php') ? 'active' : ''; ?>"><a href="#">Tài khoản</a>
+                <ul class="dropdown">
+                    <li class="<?php echo ($current_page == 'account_details.php') ? 'active' : ''; ?>"><a href="./account_details.php">Tài khoản</a></li>
+                    <li class="<?php echo ($current_page == 'shopping-cart.php') ? 'active' : ''; ?>"><a href="./shopping-cart.php">Giỏ hàng</a></li>
+                    <li class="<?php echo ($current_page == 'order-info.php') ? 'active' : ''; ?>"><a href="./order-info.php">Đơn hàng</a></li>
+                    <li class="<?php echo ($current_page == 'checkout.php') ? 'active' : ''; ?>"><a href="./checkout.php">Thanh toán</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+</div>
             <div class="col-lg-3 col-md-3">
            
             <div class="header__nav__option">

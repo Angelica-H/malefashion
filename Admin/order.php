@@ -9,17 +9,17 @@ $sort = isset($_GET['sort']) ? $_GET['sort'] : 'order_date';
 $order = isset($_GET['order']) ? $_GET['order'] : 'DESC';
 
 // Xây dựng câu truy vấn SQL
-$sql = "SELECT o.order_id, o.order_date, o.total, o.status, o.payment_method,
+$sql = "SELECT o.order_id, o.order_date, o.total, o.status AS order_status, p.payment_method, p.status AS payment_status,
                c.first_name, c.last_name,
-               (SELECT GROUP_CONCAT(p.product_name SEPARATOR ', ')
+               (SELECT GROUP_CONCAT(p2.product_name SEPARATOR ', ')
                 FROM order_items oi
                 JOIN product_variants pv ON oi.variant_id = pv.variant_id
-                JOIN products p ON pv.product_id = p.product_id
+                JOIN products p2 ON pv.product_id = p2.product_id
                 WHERE oi.order_id = o.order_id) AS product_list
         FROM orders o
         JOIN customers c ON o.customer_id = c.customer_id
+        JOIN payments p ON o.order_id = p.order_id
         WHERE 1=1";
-
 if (!empty($search)) {
     $sql .= " AND (o.order_id LIKE :search OR c.first_name LIKE :search OR c.last_name LIKE :search)";
 }
@@ -597,36 +597,37 @@ $statuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
         <div class="main-card mb-3 card">
             <div class="card-body">
                 <form method="GET" class="form-inline mb-3">
-                    <input type="text" name="search" class="form-control mr-2" placeholder="Search orders" value="<?php echo htmlspecialchars($search); ?>">
+                    <input type="text" name="search" class="form-control mr-2" placeholder="Tìm kiếm đơn hàng" value="<?php echo htmlspecialchars($search); ?>">
                     <select name="status" class="form-control mr-2">
-                        <option value="">All Statuses</option>
+                        <option value="">Tất cả trạng thái</option>
                         <?php foreach ($statuses as $s): ?>
                             <option value="<?php echo $s; ?>" <?php echo ($status == $s) ? 'selected' : ''; ?>><?php echo $s; ?></option>
                         <?php endforeach; ?>
                     </select>
                     <select name="sort" class="form-control mr-2">
-                        <option value="order_date" <?php echo ($sort == 'order_date') ? 'selected' : ''; ?>>Order Date</option>
-                        <option value="total" <?php echo ($sort == 'total') ? 'selected' : ''; ?>>Total</option>
+                        <option value="order_date" <?php echo ($sort == 'order_date') ? 'selected' : ''; ?>>Ngày đặt hàng</option>
+                        <option value="total" <?php echo ($sort == 'total') ? 'selected' : ''; ?>>Tổng cộng</option>
                     </select>
                     <select name="order" class="form-control mr-2">
-                        <option value="DESC" <?php echo ($order == 'DESC') ? 'selected' : ''; ?>>Descending</option>
-                        <option value="ASC" <?php echo ($order == 'ASC') ? 'selected' : ''; ?>>Ascending</option>
+                        <option value="DESC" <?php echo ($order == 'DESC') ? 'selected' : ''; ?>>Giảm dần</option>
+                        <option value="ASC" <?php echo ($order == 'ASC') ? 'selected' : ''; ?>>Tăng dần</option>
                     </select>
-                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <button type="submit" class="btn btn-primary">Áp dụng bộ lọc</button>
                 </form>
 
                 <div class="table-responsive">
                     <table id="orders-table" class="mb-0 table table-hover">
                         <thead>
                             <tr>
-                                <th>Order ID</th>
-                                <th>Customer</th>
-                                <th>Products</th>
-                                <th>Date</th>
-                                <th>Total</th>
-                                <th>Status</th>
+                                <th>Mã đơn hàng</th>
+                                <th>Khách hàng</th>
+                                <th>Sản phẩm</th>
+                                <th>Ngày</th>
+                                <th>Tổng cộng</th>
+                                <th>Trạng thái</th>
                                 <th>Payment Method</th>
-                                <th>Actions</th>
+                                <th>Status</th> <!-- Added column -->
+                                <th>Hành động</th>
                             </tr>
                         </thead>
                         <tbody id="orders-list">
@@ -646,13 +647,14 @@ $statuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
                                         <?php
                                         $classes = ['warning', 'primary', 'info', 'success', 'danger'];
                                         foreach ($statuses as $index => $s) {
-                                            $selected = ($order['status'] == $s) ? 'selected' : '';
+                                            $selected = ($order['order_status'] == $s) ? 'selected' : '';
                                             echo "<option value=\"$s\" data-class=\"{$classes[$index]}\" $selected>$s</option>";
                                         }
                                         ?>
                                     </select>
                                 </td>
                                 <td><?php echo htmlspecialchars($order['payment_method']); ?></td>
+                                <td><?php echo htmlspecialchars($order['payment_status']); ?></td> <!-- Added column -->
                                 <td>
                                     <a href="order-show.php?id=<?php echo $order['order_id']; ?>" class="btn btn-primary btn-sm">
                                         <i class="fa fa-info-circle"></i> Details
@@ -662,14 +664,36 @@ $statuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    <?php if ($total_pages > 1): ?>
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <?php if ($page > 1): ?>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo $search; ?>&status=<?php echo $status; ?>" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                        <span class="sr-only">Previous</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+
+                            <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                                <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                                    <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo $search; ?>&status=<?php echo $status; ?>"><?php echo $i; ?></a>
+                                </li>
+                            <?php endfor; ?>
+
+                            <?php if ($page < $total_pages): ?>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo $search; ?>&status=<?php echo $status; ?>" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                        <span class="sr-only">Next</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    </nav>
+                    <?php endif; ?>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-        </div>
-    </div>
-    
                 </div>
                 <!-- End Main -->
 
@@ -1841,6 +1865,7 @@ $statuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
         </div>
     </div>
     <div class="app-drawer-overlay d-none animated fadeIn"></div>
+   
     
     <script src="assets/scripts/jquery-3.2.1.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -1880,13 +1905,13 @@ $statuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
             },
             success: function(response) {
                 if (response === 'success') {
-                    alert('Order status updated successfully');
+                    alert('Trạng thái đơn hàng đã được cập nhật thành công');
                 } else {
-                    alert('Failed to update order status');
+                    alert('Không thể cập nhật trạng thái đơn hàng');
                 }
             },
             error: function() {
-                alert('An error occurred while updating the order status');
+                alert('Một lỗi đã xảy ra trong khi cập nhật trạng thái đơn hàng');
             }
         });
     });
