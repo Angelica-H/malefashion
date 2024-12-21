@@ -172,6 +172,18 @@ if ($result_all_products === false) {
         if ($product['is_new_arrival']) $filterClasses[] = 'new-arrivals';
         if ($product['is_hot_sale']) $filterClasses[] = 'hot-sales';
         $filterClassString = implode(' ', $filterClasses);
+
+        // Lấy đánh giá sản phẩm
+        $reviewQuery = "SELECT AVG(rating) as avg_rating FROM product_reviews WHERE product_id = ?";
+        $stmt = $conn->prepare($reviewQuery);
+        $stmt->bind_param("i", $product['product_id']);
+        $stmt->execute();
+        $avgRatingResult = $stmt->get_result();
+        $avgRating = $avgRatingResult->fetch_assoc()['avg_rating'];
+
+        $fullStars = $avgRating ? floor($avgRating) : 0;
+        $halfStar = $avgRating ? $avgRating - $fullStars >= 0.5 : false;
+        $emptyStars = $avgRating ? 5 - $fullStars - ($halfStar ? 1 : 0) : 5;
         ?>
         <div class="col-lg-3 col-md-6 col-sm-6 mix <?php echo $filterClassString; ?>">
             <div class="product__item">
@@ -183,8 +195,8 @@ if ($result_all_products === false) {
                         <span class="label">Hot Sale</span>
                     <?php endif; ?>
                     <ul class="product__hover">
-                        <li><a href="#"><img src="assets/img/icon/heart.png" alt=""></a></li>
-                        <li><a href="#"><img src="assets/img/icon/compare.png" alt=""> <span>Compare</span></a></li>
+                        <!-- <li><a href="#"><img src="assets/img/icon/heart.png" alt=""></a></li>
+                        <li><a href="#"><img src="assets/img/icon/compare.png" alt=""> <span>Compare</span></a></li> -->
                         <li><a href="shop-details.php?id=<?php echo $product['product_id']; ?>"><img src="assets/img/icon/search.png" alt=""></a></li>
                     </ul>
                 </div>
@@ -194,11 +206,17 @@ if ($result_all_products === false) {
                         Xem chi tiết sản phẩm
                     </a>
                     <div class="rating">
-                        <i class="fa fa-star-o"></i>
-                        <i class="fa fa-star-o"></i>
-                        <i class="fa fa-star-o"></i>
-                        <i class="fa fa-star-o"></i>
-                        <i class="fa fa-star-o"></i>
+                        <?php
+                        for ($i = 0; $i < $fullStars; $i++) {
+                            echo '<i class="fa fa-star" style="color: #ffd700;"></i>';
+                        }
+                        if ($halfStar) {
+                            echo '<i class="fa fa-star-half-o" style="color: #ffd700;"></i>';
+                        }
+                        for ($i = 0; $i < $emptyStars; $i++) {
+                            echo '<i class="fa fa-star-o" style="color: #ffd700;"></i>';
+                        }
+                        ?>
                     </div>
                     <?php if ($product['sale_price']): ?>
                         <h5 style="text-decoration: line-through;"><?php echo number_format($product['price']); ?>đ</h5>
@@ -215,6 +233,23 @@ if ($result_all_products === false) {
     echo "<p>Không có sản phẩm nào.</p>";
 }
 ?>
+    </div>
+    </div>
+    </div>
+
+    </section>
+    <!-- Product Section End -->
+
+    <!-- Categories Section Begin -->
+    <section class="categories spad">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-3">
+                    <div class="categories__text">
+                        <h2>Clothings Hot <br /> <span>Shoe Collection</span> <br /> Accessories</h2>
+                    </div>
+                </div>
+                <div class="col-lg-4">
     </div>
     </div>
     </div>

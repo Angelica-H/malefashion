@@ -35,9 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             header('Location: ../account_details.php');
         } else {
             echo json_encode(['status' => 'error', 'message' => 'Mật khẩu không chính xác!']);
+            header('Location: ../login.php?error=password');
         }
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Email không tồn tại!']);
+        header('Location: ../login.php?error=email');
     }
 
     $stmt->close();

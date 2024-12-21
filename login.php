@@ -58,6 +58,9 @@
             text-align: center;
             margin-top: 20px;
         }
+        .alert {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -88,6 +91,15 @@
                         <span>Chưa có tài khoản? </span>
                         <a href="register.php">Đăng ký ngay</a>
                     </div>
+                    <?php if(isset($_GET['error'])): ?>
+                        <div class="alert alert-danger">
+                            <?php if($_GET['error'] == 'password'): ?>
+                                Mật khẩu không chính xác!
+                            <?php elseif($_GET['error'] == 'email'): ?>
+                                Email không tồn tại!
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 </form>
             </div>
         </div>

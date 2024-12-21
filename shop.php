@@ -200,6 +200,8 @@ $result = $conn->query($sql);
                             <?php while ($row = $result->fetch_assoc()): 
                                 $availableSizes = [];
                                 $availableColors = [];
+                                $avgRating = 0;
+                                $reviewCount = 0;
                                 
                                 // Fetch available sizes
                                 $size_sql = "SELECT DISTINCT s.size_id, s.size_name 
@@ -221,23 +223,23 @@ $result = $conn->query($sql);
                                     $availableColors[] = $color['color_name'];
                                 }
 
-                                 // $productData = [
-                                 //   'id' => $row['product_id'],
-                                 //   'name' => $row['product_name'],
-                                 //   'price' => $row['price'],
-                                 //   'sale_price' => $row['sale_price'],
-                                 //   'availableSizes' => $availableSizes,
-                                 //   'availableColors' => $availableColors,
-                                 //   'image' => $row['product_image']
-                                 // ];
-                                 // $productDataJson = htmlspecialchars(json_encode($productData), ENT_QUOTES, 'UTF-8');
+                                // Calculate average rating and review count
+                                $review_sql = "SELECT AVG(rating) as avg_rating, COUNT(*) as review_count 
+                                               FROM product_reviews 
+                                               WHERE product_id = {$row['product_id']}";
+                                $review_result = $conn->query($review_sql);
+                                if ($review_row = $review_result->fetch_assoc()) {
+                                    $avgRating = $review_row['avg_rating'];
+                                    $reviewCount = $review_row['review_count'];
+                                }
                             ?>
                                 <div class="col-lg-4 col-md-6 col-sm-6">
                                     <div class="product__item">
                                         <div class="product__item__pic set-bg" data-setbg="<?php echo htmlspecialchars($row['product_image']); ?>">
                                             <ul class="product__hover">
-                                                <li><a href="#"><img src="assets/img/icon/heart.png" alt=""></a></li>
+                                               <!--  <li><a href="#"><img src="assets/img/icon/heart.png" alt=""></a></li>
                                                 <li><a href="#"><img src="assets/img/icon/compare.png" alt=""> <span>Compare</span></a></li>
+                                                -->
                                                 <li><a href="shop-details.php?id=<?php echo htmlspecialchars($row['product_id']); ?>"><img src="assets/img/icon/search.png" alt=""></a></li>
                                             </ul>
                                         </div>
@@ -247,11 +249,22 @@ $result = $conn->query($sql);
                         Xem chi tiết
                     </a>
                                             <div class="rating">
-                                                <i class="fa fa-star-o"></i>
-                                                <i class="fa fa-star-o"></i>
-                                                <i class="fa fa-star-o"></i>
-                                                <i class="fa fa-star-o"></i>
-                                                <i class="fa fa-star-o"></i>
+                                                <?php
+                                                $fullStars = floor($avgRating);
+                                                $halfStar = $avgRating - $fullStars >= 0.5;
+                                                $emptyStars = 5 - $fullStars - ($halfStar ? 1 : 0);
+
+                                                for ($i = 0; $i < $fullStars; $i++) {
+                                                    echo '<i class="fa fa-star" style="color: gold;"></i>';
+                                                }
+                                                if ($halfStar) {
+                                                    echo '<i class="fa fa-star-half-o" style="color: gold;"></i>';
+                                                }
+                                                for ($i = 0; $i < $emptyStars; $i++) {
+                                                    echo '<i class="fa fa-star-o" style="color: gold;"></i>';
+                                                }
+                                                ?>
+                                                <span> - <?php echo number_format($avgRating, 1); ?> / 5 (<?php echo $reviewCount; ?> đánh giá)</span>
                                             </div>
                                             <?php if ($row['sale_price']): ?>
                                                 <h5 style="text-decoration: line-through;"><?php echo number_format($row['price']); ?>đ</h5>
@@ -259,7 +272,6 @@ $result = $conn->query($sql);
                                             <?php else: ?>
                                                 <h5><?php echo number_format($row['price']); ?>đ</h5>
                                             <?php endif; ?>
-                                            
                                         </div>
                                     </div>
                                 </div>

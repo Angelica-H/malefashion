@@ -244,10 +244,11 @@ $stmt->close();
         Thêm vào giỏ
     </a>
 </div>
-                <div class="product__details__btns__option">
+                <!-- <div class="product__details__btns__option">
                     <a href="#"><i class="fa fa-heart"></i> Thêm vào yêu thích</a>
                     <a href="#"><i class="fa fa-exchange"></i> So sánh</a>
                 </div>
+                    -->
                 <div class="product__details__last__option">
                     <h5><span>Guaranteed Safe Checkout</span></h5>
                     <img src="img/shop-details/details-payment.png" alt="">
@@ -404,10 +405,12 @@ $stmt->close();
                 $current_category_id = $product['category_id'];
                 
                 // Truy vấn để lấy các sản phẩm liên quan
-                $related_sql = "SELECT p.*, b.brand_name 
+                $related_sql = "SELECT p.*, b.brand_name, AVG(pr.rating) as avg_rating
                                 FROM products p
                                 LEFT JOIN brands b ON p.brand_id = b.brand_id
+                                LEFT JOIN product_reviews pr ON p.product_id = pr.product_id
                                 WHERE p.category_id = ? AND p.product_id != ?
+                                GROUP BY p.product_id
                                 ORDER BY RAND()
                                 LIMIT 4";
                 $stmt = $conn->prepare($related_sql);
@@ -433,11 +436,22 @@ $stmt->close();
                                 <h6><?php echo htmlspecialchars($related_product['product_name']); ?></h6>
                                 <a href="shop-details.php?id=<?php echo $related_product['product_id']; ?>" class="add-cart">+ Xem chi tiết</a>
                                 <div class="rating">
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star"></i>
-                                    <i class="fa fa-star-o"></i>
+                                    <?php
+                                    $avgRating = $related_product['avg_rating'];
+                                    $fullStars = floor($avgRating);
+                                    $halfStar = $avgRating - $fullStars >= 0.5;
+                                    $emptyStars = 5 - $fullStars - ($halfStar ? 1 : 0);
+
+                                    for ($i = 0; $i < $fullStars; $i++) {
+                                        echo '<i class="fa fa-star"></i>';
+                                    }
+                                    if ($halfStar) {
+                                        echo '<i class="fa fa-star-half-o"></i>';
+                                    }
+                                    for ($i = 0; $i < $emptyStars; $i++) {
+                                        echo '<i class="fa fa-star-o"></i>';
+                                    }
+                                    ?>
                                 </div>
                                 <?php if ($related_product['sale_price']): ?>
                                     <h5><span class="original-price"><?php echo number_format($related_product['price']); ?> đ</span> <?php echo number_format($related_product['sale_price']); ?> đ</h5>
