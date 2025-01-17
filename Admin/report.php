@@ -1,11 +1,74 @@
 <?php
- require 'process/config.php';
- require 'process/check_admin_session.php';
- checkAdminSession();
+require 'includes/db_connect.php';
+require 'process/check_admin_session.php';
+checkAdminSession();
 
+// Lấy dữ liệu từ GET request
+$startDate = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
+$endDate = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
+
+// Tổng doanh thu
+$totalRevenueSql = "SELECT SUM(total) AS total_revenue FROM orders WHERE order_date BETWEEN ? AND ?";
+$stmt = $conn->prepare($totalRevenueSql);
+$stmt->bind_param("ss", $startDate, $endDate);
+$stmt->execute();
+$totalRevenue = $stmt->get_result()->fetch_assoc()['total_revenue'];
+$stmt->close();
+
+// Doanh thu theo ngày
+$dailyRevenueSql = "SELECT DATE(order_date) AS order_date, SUM(total) AS daily_revenue 
+                    FROM orders WHERE order_date BETWEEN ? AND ? GROUP BY DATE(order_date)";
+$stmt = $conn->prepare($dailyRevenueSql);
+$stmt->bind_param("ss", $startDate, $endDate);
+$stmt->execute();
+$dailyRevenueData = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
+// Sản phẩm bán chạy
+$topProductsSql = "SELECT p.product_name, SUM(oi.quantity) AS total_sold 
+FROM order_items oi 
+JOIN product_variants pv ON oi.variant_id = pv.variant_id 
+JOIN products p ON pv.product_id = p.product_id 
+JOIN orders o ON oi.order_id = o.order_id 
+WHERE o.order_date BETWEEN ? AND ? AND o.status = 'Delivered' 
+GROUP BY p.product_name 
+ORDER BY total_sold DESC LIMIT 10;
+";
+$stmt = $conn->prepare($topProductsSql);
+$stmt->bind_param("ss", $startDate, $endDate);
+$stmt->execute();
+$topProducts = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
+// Doanh thu theo danh mục
+$categoryRevenueSql = "SELECT c.category_name, SUM(oi.price * oi.quantity) AS category_revenue 
+                       FROM order_items oi 
+                       JOIN product_variants pv ON oi.variant_id = pv.variant_id 
+                       JOIN products p ON pv.product_id = p.product_id 
+                       JOIN categories c ON p.category_id = c.category_id 
+                       JOIN orders o ON oi.order_id = o.order_id 
+                       WHERE o.order_date BETWEEN ? AND ? AND o.status = 'Delivered' 
+                       GROUP BY c.category_name";
+$stmt = $conn->prepare($categoryRevenueSql);
+$stmt->bind_param("ss", $startDate, $endDate);
+$stmt->execute();
+$categoryRevenue = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
+// Doanh thu theo phương thức thanh toán
+$paymentMethodSql = "SELECT payment_method, SUM(amount) AS total_revenue 
+                     FROM payments 
+                     WHERE payment_date BETWEEN ? AND ? 
+                     GROUP BY payment_method";
+$stmt = $conn->prepare($paymentMethodSql);
+$stmt->bind_param("ss", $startDate, $endDate);
+$stmt->execute();
+$paymentMethodRevenue = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
+$conn->close();
 ?>
- 
-<!doctype html>
+ <!doctype html>
 <html lang="en">
 
 <head>
@@ -26,11 +89,12 @@
 
     <link href="./main.css" rel="stylesheet">
     <link href="./my_style.css" rel="stylesheet">
+    
 </head>
 
 <body>
     <div class="app-container app-theme-white body-tabs-shadow fixed-header fixed-sidebar">
-        <?php include 'includes/app-header.php'; ?>
+    <?php include 'includes/app-header.php'; ?>
 
         <div class="ui-theme-settings">
             <button type="button" id="TooltipDemo" class="btn-open-options btn btn-warning">
@@ -500,7 +564,7 @@
                     </span>
                 </div>
                 <div class="scrollbar-sidebar">
-                    <?php require 'includes/app-siderbar__heading.php' ?>
+                <?php require 'includes/app-siderbar__heading.php' ?>
                 </div>
             </div>
 
@@ -515,255 +579,153 @@
                                     <i class="pe-7s-ticket icon-gradient bg-mean-fruit"></i>
                                 </div>
                                 <div>
-                                    User
+                                    Report
                                     <div class="page-title-subheading">
                                         View, create, update, delete and manage.
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="page-title-actions">
-                                
-                                <a href="./admin-create.php" class="btn-shadow btn-hover-shine mr-3 btn btn-success">
-                                    <span class="btn-icon-wrapper pr-2 opacity-7">
-                                        <i class="fa fa-user-plus fa-w-20"></i>
-                                    </span>
-                                    Create Admin
-                                </a>
-                            </div>
+                            
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-12">
-                            <div class="main-card mb-3 card">
-
-                                <div class="card-header">
-
-                                     <!-- <form>
-                                        <div class="input-group">
-                                            <input type="search" name="search" id="search"
-                                                placeholder="Tìm kiếm mọi thứ" class="form-control">
-                                            <span class="input-group-append">
-                                                <button type="submit" class="btn btn-primary">
-                                                    <i class="fa fa-search"></i>&nbsp;
-                                                    Tìm kiếm
-                                                </button>
-                                            </span>
-                                        </div>
-                                    </form> -->
-
-                                    <div class="btn-actions-pane-right">
-                                       <!--  <div role="group" class="btn-group-sm btn-group">
-                                            <button class="btn btn-focus">Tuần này</button>
-                                            <button class="active btn btn-focus">Bất kỳ lúc nào</button>
-                                        </div> -->
+                        <div class="main-card mb-3 card">
+                        <div class="card-header">
+                            <form method="GET" class="mb-4">
+                                <div class="form-row">
+                                    <div class="form-group col-md-5">
+                                        <label for="start_date">Ngày bắt đầu</label>
+                                        <input type="date" class="form-control" id="start_date" name="start_date" value="<?php echo $startDate; ?>">
+                                    </div>
+                                    <div class="form-group col-md-5">
+                                        <label for="end_date">Ngày kết thúc</label>
+                                        <input type="date" class="form-control" id="end_date" name="end_date" value="<?php echo $endDate; ?>">
+                                    </div>
+                                    <div class="form-group col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary w-100">Lọc</button>
                                     </div>
                                 </div>
-                                <?php
-        if (isset($_SESSION['success_message'])) {
-            echo '<div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                    ' . htmlspecialchars($_SESSION['success_message']) . '
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>';
-            unset($_SESSION['success_message']);
-        }
-        ?>
-                                <div class="table-responsive">
-                                    <table class="align-middle mb-0 table table-borderless table-striped table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th class="text-center">ID</th>
-                                                <th>Tên đầy đủ</th>
-                                                <th class="text-center">Email</th>
-                                                <th class="text-center">Cấp độ</th>
-                                                <th class="text-center">Ngày tạo</th>
-                                                <th class="text-center">Hành động</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-
-                                            <?php
-                                            require_once 'process/config.php';
-                                            require_once 'process/check_admin_session.php';
-                                            
-                                            try {
-                                                $stmt = $pdo->query("SELECT * FROM admin");
-                                                $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                                                
-                                                $stmt = $pdo->query("SELECT * FROM customers");
-                                                $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                                                
-                                                $allUsers = array_merge($admins, $customers);
-                                                
-                                                // Lấy thông tin về admin hiện tại
-                                                $currentAdminId = $_SESSION['user_id'];
-                                                $currentAdminRole = $_SESSION['role'];
-                                                
-                                                foreach ($allUsers as $user) {
-                                                    $isAdmin = isset($user['admin_id']);
-                                                    $userId = $isAdmin ? $user['admin_id'] : $user['customer_id'];
-                                                    $userType = $isAdmin ? 'Admin' : 'Customer';
-                                                    
-                                                    if ($isAdmin) {
-                                                        $fullName = $user['username'];
-                                                        $role = $user['role'];
-                                                        $createdAt = $user['created_at'];
-                                                    } else {
-                                                        $fullName = $user['first_name'] . ' ' . $user['last_name'];
-                                                        $role = 'Customer';
-                                                        $createdAt = $user['created_at'];
-                                                    }
-                                                    
-                                                    echo "<tr>
-                                                        <td class=\"text-center text-muted\">#{$userId}</td>
-                                                        <td>
-                                                            <div class=\"widget-content p-0\">
-                                                                <div class=\"widget-content-wrapper\">
-                                                                    <div class=\"widget-content-left mr-3\">
-                                                                        <div class=\"widget-content-left\">
-                                                                            <img width=\"40\" class=\"rounded-circle\"
-                                                                                data-toggle=\"tooltip\" title=\"Image\"
-                                                                                data-placement=\"bottom\"
-                                                                                src=\"assets/images/_default-user.png\" alt=\"\">
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class=\"widget-content-left flex2\">
-                                                                        <div class=\"widget-heading\">{$fullName}</div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td class=\"text-center\">{$user['email']}</td>
-                                                        <td class=\"text-center\">
-                                                            <span class=\"badge badge-" . ($isAdmin ? 'success' : 'secondary') . "\">
-                                                                {$role}
-                                                            </span>
-                                                        </td>
-                                                        <td class=\"text-center\">
-                                                            " . date('d/m/Y H:i:s', strtotime($createdAt)) . "
-                                                        </td>
-                                                        <td class=\"text-center\">";
-                                                    
-                                                    // Hiển thị nút Details cho tất cả các trường hợp
-                                                    echo "<a href=\"./user-show.php?id={$userId}&type={$userType}\"
-                                                            class=\"btn btn-hover-shine btn-outline-primary border-0 btn-sm\">
-                                                            Details
-                                                        </a>";
-                                                    
-                                                    // Kiểm tra quyền chỉnh sửa
-                                                    if ($currentAdminRole == 'Super Admin' || 
-                                                        ($currentAdminRole == 'Admin' && ($userType == 'Customer' || $userId == $currentAdminId))) {
-                                                        echo "<a href=\"./user-edit.php?id={$userId}&type={$userType}\" data-toggle=\"tooltip\" title=\"Edit\"
-                                                                data-placement=\"bottom\" class=\"btn btn-outline-warning border-0 btn-sm\">
-                                                                <span class=\"btn-icon-wrapper opacity-8\">
-                                                                    <i class=\"fa fa-edit fa-w-20\"></i>
-                                                                </span>
-                                                            </a>";
-                                                    }
-                                                    
-                                                    // Kiểm tra quyền xóa
-                                                    if ($currentAdminRole == 'Super Admin' || 
-                                                        ($currentAdminRole == 'Admin' && $userType == 'Customer')) {
-                                                        echo "<form class=\"d-inline\" action=\"process/delete_user.php\" method=\"post\">
-                                                                <input type=\"hidden\" name=\"user_id\" value=\"{$userId}\">
-                                                                <input type=\"hidden\" name=\"user_type\" value=\"{$userType}\">
-                                                                <button class=\"btn btn-hover-shine btn-outline-danger border-0 btn-sm\"
-                                                                    type=\"submit\" data-toggle=\"tooltip\" title=\"Delete\"
-                                                                    data-placement=\"bottom\"
-                                                                    onclick=\"return confirm('Do you really want to delete this item?')\">
-                                                                    <span class=\"btn-icon-wrapper opacity-8\">
-                                                                        <i class=\"fa fa-trash fa-w-20\"></i>
-                                                                    </span>
-                                                                </button>
-                                                            </form>";
-                                                    }
-                                                    
-                                                    echo "</td>
-                                                    </tr>";
-                                                }
-                                            } catch (PDOException $e) {
-                                                echo "Error: " . $e->getMessage();
-                                            }
-                                            ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                <div class="d-block card-footer">
-                                    <nav role="navigation" aria-label="Pagination Navigation"
-                                        class="flex items-center justify-between">
-                                        <div class="flex justify-between flex-1 sm:hidden">
-                                            <span
-                                                class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default leading-5 rounded-md">
-                                                « Previous
-                                            </span>
-
-                                            <a href="#page=2"
-                                                class="relative inline-flex items-center px-4 py-2 ml-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:shadow-outline-blue focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150">
-                                                Next »
-                                            </a>
-                                        </div>
-
-                                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                                            <div>
-                                                <p class="text-sm text-gray-700 leading-5">
-                                                    Showing
-                                                    <span class="font-medium">1</span>
-                                                    to
-                                                    <span class="font-medium">5</span>
-                                                    of
-                                                    <span class="font-medium">9</span>
-                                                    results
-                                                </p>
-                                            </div>
-
-                                            <div>
-                                                <span class="relative z-0 inline-flex shadow-sm rounded-md">
-                                                    <span aria-disabled="true" aria-label="&amp;laquo; Previous">
-                                                        <span
-                                                            class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default rounded-l-md leading-5"
-                                                            aria-hidden="true">
-                                                            <svg class="w-5 h-5" fill="currentColor"
-                                                                viewBox="0 0 20 20">
-                                                                <path fill-rule="evenodd"
-                                                                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                                                                    clip-rule="evenodd"></path>
-                                                            </svg>
-                                                        </span>
-                                                    </span>
-
-                                                    <span aria-current="page">
-                                                        <span
-                                                            class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default leading-5">1</span>
-                                                    </span>
-                                                    <a href="#page=2"
-                                                        class="relative inline-flex items-center px-4 py-2 -ml-px text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 hover:text-gray-500 focus:z-10 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150"
-                                                        aria-label="Go to page 2">
-                                                        2
-                                                    </a>
-
-                                                    <a href="#page=2" rel="next"
-                                                        class="relative inline-flex items-center px-2 py-2 -ml-px text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md leading-5 hover:text-gray-400 focus:z-10 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:bg-gray-100 active:text-gray-500 transition ease-in-out duration-150"
-                                                        aria-label="Next &amp;raquo;">
-                                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd"
-                                                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                                                clip-rule="evenodd"></path>
-                                                        </svg>
-                                                    </a>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </nav>
-                                </div>
-
-                            </div>
+                            </form>
                         </div>
-                    </div>
-                </div>
+
+                                <div class="container mt-5">
+                                <h1 class="text-center mb-4 text-primary">Báo cáo Doanh thu</h1>
+                                
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h3 class="text-success">Tổng doanh thu: <span class="text-info"><?php echo number_format($totalRevenue, 2); ?> VNĐ</span></h3>
+                                    </div>
+                                </div>
+
+                                <!-- Doanh thu theo ngày -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h3 class="text-warning">Doanh thu theo ngày</h3>
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-bordered">
+                                                <thead class="thead-dark">
+                                                    <tr>
+                                                        <th>Ngày</th>
+                                                        <th>Doanh thu (VNĐ)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($dailyRevenueData as $data): ?>
+                                                    <tr>
+                                                        <td><?php echo $data['order_date']; ?></td>
+                                                        <td><?php echo number_format($data['daily_revenue'], 2); ?></td>
+                                                    </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sản phẩm bán chạy -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h3 class="text-info">Sản phẩm bán chạy</h3>
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-bordered">
+                                                <thead class="thead-dark">
+                                                    <tr>
+                                                        <th>Tên sản phẩm</th>
+                                                        <th>Số lượng bán</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($topProducts as $product): ?>
+                                                    <tr>
+                                                        <td><?php echo $product['product_name']; ?></td>
+                                                        <td><?php echo $product['total_sold']; ?></td>
+                                                    </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Doanh thu theo danh mục -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h3 class="text-danger">Doanh thu theo danh mục</h3>
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-bordered">
+                                                <thead class="thead-dark">
+                                                    <tr>
+                                                        <th>Tên danh mục</th>
+                                                        <th>Doanh thu (VNĐ)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($categoryRevenue as $category): ?>
+                                                    <tr>
+                                                        <td><?php echo $category['category_name']; ?></td>
+                                                        <td><?php echo number_format($category['category_revenue'], 2); ?></td>
+                                                    </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Doanh thu theo phương thức thanh toán -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h3 class="text-dark">Doanh thu theo phương thức thanh toán</h3>
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-bordered">
+                                                <thead class="thead-dark">
+                                                    <tr>
+                                                        <th>Phương thức thanh toán</th>
+                                                        <th>Doanh thu (VNĐ)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($paymentMethodRevenue as $payment): ?>
+                                                    <tr>
+                                                        <td><?php echo $payment['payment_method']; ?></td>
+                                                        <td><?php echo number_format($payment['total_revenue'], 2); ?></td>
+                                                    </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+     
+</div>
+</div>
+</div>
+</div>
                 <!-- End Main -->
 
                 <div class="app-wrapper-footer">

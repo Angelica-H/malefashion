@@ -112,7 +112,7 @@ session_start();
                                             <label>Phương thức thanh toán</label>
                                         <select name="payment_method" required>
                                             <option value="COD">Thanh toán khi nhận hàng</option>
-                                            <option value="VNPAY">Chuyển khoản ngân hàng</option>
+                                            <option value="VNPAY">Thanh toán online</option>
                                         </select>
                                     </label>
                                 </div>

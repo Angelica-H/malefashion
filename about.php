@@ -68,22 +68,21 @@ session_start();
                 <div class="col-lg-4 col-md-4 col-sm-6">
                     <div class="about__item">
                         <h4>Chúng Tôi Là Ai?</h4>
-                        <p>Các chương trình quảng cáo theo ngữ cảnh đôi khi có những chính sách nghiêm ngặt cần phải tuân thủ.
-                        Hãy lấy Google làm ví dụ.</p>
+                        <p>Chúng tôi là một thương hiệu thời trang uy tín, luôn cam kết mang đến những sản phẩm chất lượng, phù hợp với xu hướng hiện đại. Tại chúng tôi, mỗi sản phẩm đều được lựa chọn kỹ càng, không chỉ đáp ứng nhu cầu thẩm mỹ mà còn tạo ra sự thoải mái cho người mặc.</p>
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-4 col-sm-6">
                     <div class="about__item">
                         <h4>Chúng Tôi Làm Gì?</h4>
-                        <p>Trong thế hệ kỹ thuật số này, nơi thông tin có thể dễ dàng thu được trong vài giây, danh thiếp
-                        vẫn giữ được tầm quan trọng của chúng.</p>
+                        <p>Trong thế giới thời trang ngày nay, nơi xu hướng thay đổi nhanh chóng và nhu cầu đa dạng, chúng tôi cung cấp những bộ sưu tập thời trang tinh tế và phong cách. Mỗi sản phẩm của chúng tôi được thiết kế với chất liệu cao cấp và kiểu dáng hiện đại, giúp bạn tự tin thể hiện phong cách cá nhân.</p>
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-4 col-sm-6">
                     <div class="about__item">
                         <h4>Tại Sao Chọn Chúng Tôi</h4>
-                        <p>Một ngôi nhà hai hoặc ba tầng là cách lý tưởng để tối đa hóa mảnh đất mà ngôi nhà của chúng ta
-                        tọa lạc, nhưng đối với người già hoặc người khuyết tật.</p>
+                        <p>Với đội ngũ thiết kế sáng tạo và sự chăm sóc tận tâm, chúng tôi mang đến những sản phẩm không chỉ đẹp mắt mà còn phù hợp với mọi đối tượng khách hàng. Cho dù bạn đang tìm kiếm trang phục cho công sở, dạo phố hay những dịp đặc biệt, chúng tôi luôn có những lựa chọn hoàn hảo để bạn nổi bật. Chúng tôi cũng đặc biệt chú trọng đến sự thoải mái, giúp bạn tự tin và dễ dàng di chuyển trong mọi hoạt động.
+
+</p>
                     </div>
                 </div>
             </div>

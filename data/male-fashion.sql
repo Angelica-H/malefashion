@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th10 23, 2024 lúc 11:46 AM
+-- Thời gian đã tạo: Th12 16, 2024 lúc 04:14 PM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -43,9 +43,8 @@ CREATE TABLE `admin` (
 
 INSERT INTO `admin` (`admin_id`, `username`, `email`, `password`, `role`, `status`, `created_at`) VALUES
 (2, 'Supper Admin', 'admin@gmail.com', '$2y$10$B14PUwN6zvApNy8ikz3LB.AK6MmF1z0F0glmqbtAgcDTGoULp.HxG', 'Super Admin', 1, '2024-10-13 08:59:08'),
-(15, 'nhanvien1', 'nhanvien1@gmail.com', '$2y$10$QBU/UlK4kxIPBPSXfu8oqeSE6BZRIyF45pNalsXfSUaRdIVMaeYPC', 'Admin', 1, '2024-10-16 14:01:47'),
 (16, 'nhanvien2', 'nhanvien2@gmail.com', '$2y$10$Yw5ZHfCRiq936ZhSuu7a1OnyU5UHWf5Y3CI0SSccOqmXHFFjC0UVu', 'Editor', 1, '2024-10-16 14:02:52'),
-(17, 'nhanvien3 ', 'nhanvien3@gmail.com', '$2y$10$Vcvh8dSepUmr8nT7U7cwPeuBda0kyOSXxa..LvHHe4OPDBAJbuMU2', 'Viewer', 1, '2024-10-16 14:04:01'),
+(17, 'nhanvien3 ', 'nhanvien3@gmail.com', '$2y$10$rh527olttHDoCwhOudHH7.L48gn5Eem2ERHCW4MqS6DVqIaJJCgnu', 'Admin', 1, '2024-10-16 14:04:01'),
 (21, 'employee1', 'employee1@example.com', 'hashed_password1', 'Admin', 1, '2024-10-16 16:36:51'),
 (23, 'employee3', 'employee3@example.com', 'hashed_password3', 'Admin', 1, '2024-10-16 16:36:51');
 
@@ -159,13 +158,14 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`customer_id`, `first_name`, `last_name`, `email`, `phone_number`, `password`, `shipping_address`, `billing_address`, `created_at`) VALUES
-(2, 'Nguyễn', 'Hùng', 'Hung@gmail.com', '0961919603', '$2y$10$z.AUck7q1Tra35pDnP4iTOxLp0M.4dYhyH3NxmqQo1swv5fyl1Uhy', 'hoàng mai hà nội ', 'Nam định ', '2024-09-29 16:45:29'),
+(2, 'Nguyễn', 'Hùng', 'Hung@gmail.com', '0961919603', '$2y$10$ilf2WcpY5i8EWUpakzzH4uynZVGVc9Td8fej83meiiwowGYct81ii', 'hoàng mai hà nội ', 'Nam định ', '2024-09-29 16:45:29'),
 (3, 'Leroy', 'Bender', 'test@gmail.com', '362-9474', '$2y$10$o/k/d9gRBdHtCcDZKykOl.1dm/V7jbZ02Zo5DxCTCSax4Pn9ao5he', 'hà nội', NULL, '2024-10-07 02:37:01'),
 (6, 'John', 'Doe', 'john.doe1@example.com', '0912345678', '$2y$10$1yPCs2cqbgQ3O1xpWKIzTO8et/poREpN36tTkmYsKAiI4aXiqShZO', '123 Main St', '456 Another St', '2024-10-16 16:37:08'),
 (9, 'Bob', 'Davis', 'bob.davis4@example.com', '0945678901', 'hashed_password4', '101 Elm St', '202 Birch St', '2024-10-16 16:37:08'),
 (10, 'Charlie', 'Miller', 'charlie.miller5@example.com', '0956789012', '$2y$10$WNBK9d6rzjdlo5MJrX4BMeF.wtKHvJpnmZKe4nRL.tiHl2zcccEKS', '202 Spruce St', '303 Poplar St', '2024-10-16 16:37:08'),
 (11, 'Daisy', 'Johnson', 'daisy.johnson6@example.com', '0967890123', 'hashed_password6', '303 Fir St', '404 Ash St', '2024-10-16 16:37:08'),
-(12, 'Eve', 'White', 'eve.white7@example.com', '0978901234', 'hashed_password7', '404 Palm St', '505 Palm St', '2024-10-16 16:37:08');
+(12, 'Eve', 'White', 'eve.white7@example.com', '0978901234', 'hashed_password7', '404 Palm St', '505 Palm St', '2024-10-16 16:37:08'),
+(16, 'Nguyễn', 'vuong', 'nguyenvanhung0297@gmail.com', '0961919603', '$2y$10$IowiRjgdXoKMJNrcAHvaFedtxIIGGLMueiWcFMZR8zyzKm47rQZVC', NULL, NULL, '2024-12-14 13:46:01');
 
 -- --------------------------------------------------------
 
@@ -179,21 +179,27 @@ CREATE TABLE `orders` (
   `order_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `total` decimal(10,2) NOT NULL,
   `status` varchar(50) DEFAULT 'Pending',
-  `shipping_address` text DEFAULT NULL,
-  `payment_method` varchar(50) DEFAULT NULL
+  `shipping_address` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `orders`
 --
 
-INSERT INTO `orders` (`order_id`, `customer_id`, `order_date`, `total`, `status`, `shipping_address`, `payment_method`) VALUES
-(74, 2, '2024-10-22 15:09:50', 280000.00, 'Pending', 'hoàng mai hà nội ', 'COD'),
-(75, 2, '2024-10-22 15:14:31', 280000.00, 'Delivered', 'hoàng mai hà nội ', 'COD'),
-(78, 2, '2024-10-22 15:34:13', 674000.00, 'Shipped', 'Giao Thủy Nam Định', 'COD'),
-(79, 2, '2024-10-22 16:27:59', 674000.00, 'Cancelled', 'hoàng mai hà nội ', 'COD'),
-(80, 6, '2024-10-23 05:49:57', 355000.00, 'Pending', '123 Main St', 'COD'),
-(81, 10, '2024-10-23 07:22:25', 352000.00, 'Pending', '202 Spruce St', 'COD');
+INSERT INTO `orders` (`order_id`, `customer_id`, `order_date`, `total`, `status`, `shipping_address`) VALUES
+(166, 16, '2024-12-14 20:13:33', 250000.00, 'Processing', 'Giao Thủy Nam Định'),
+(167, 16, '2024-12-14 20:18:17', 319000.00, 'Shipped', 'ádasda'),
+(168, 2, '2024-12-15 04:36:55', 155000.00, 'Processing', 'hoàng mai hà nội '),
+(169, 2, '2024-12-15 05:00:51', 153321.00, 'Processing', 'hoàng mai hà nội '),
+(170, 2, '2024-12-15 05:01:06', 155000.00, 'Processing', 'hoàng mai hà nội '),
+(171, 2, '2024-12-15 05:01:28', 319000.00, 'Processing', 'hoàng mai hà nội '),
+(172, 2, '2024-12-15 05:01:48', 250000.00, 'Processing', 'hoàng mai hà nội '),
+(173, 2, '2024-12-15 05:02:12', 250000.00, 'Processing', 'hoàng mai hà nội '),
+(174, 2, '2024-12-15 05:02:29', 389000.00, 'Processing', 'hoàng mai hà nội '),
+(175, 2, '2024-12-15 05:02:46', 389200.00, 'Processing', 'hoàng mai hà nội '),
+(176, 2, '2024-12-15 05:03:01', 352000.00, 'Processing', 'hoàng mai hà nội '),
+(177, 2, '2024-12-15 05:03:46', 319000.00, 'Shipped', 'hoàng mai hà nội '),
+(179, 2, '2024-12-15 05:04:23', 250000.00, 'Delivered', 'hoàng mai hà nội ');
 
 -- --------------------------------------------------------
 
@@ -217,13 +223,19 @@ CREATE TABLE `order_items` (
 --
 
 INSERT INTO `order_items` (`order_item_id`, `order_id`, `variant_id`, `sku_id`, `quantity`, `price`, `size`, `color`) VALUES
-(65, 74, 381, 53, 2, 125000.00, NULL, NULL),
-(66, 75, 381, 53, 2, 125000.00, NULL, NULL),
-(67, 78, 390, 62, 2, 322000.00, NULL, NULL),
-(68, 79, 390, 62, 1, 322000.00, NULL, NULL),
-(69, 79, 391, 63, 1, 322000.00, NULL, NULL),
-(70, 80, 385, 57, 1, 325000.00, NULL, NULL),
-(71, 81, 390, 62, 1, 322000.00, NULL, NULL);
+(133, 166, 384, 56, 1, 220000.00, NULL, NULL),
+(134, 167, 380, 52, 1, 289000.00, NULL, NULL),
+(135, 168, 381, 53, 1, 125000.00, NULL, NULL),
+(136, 169, 386, 58, 1, 123321.00, NULL, NULL),
+(137, 170, 381, 53, 1, 125000.00, NULL, NULL),
+(138, 171, 380, 52, 1, 289000.00, NULL, NULL),
+(139, 172, 384, 56, 1, 220000.00, NULL, NULL),
+(140, 173, 384, 56, 1, 220000.00, NULL, NULL),
+(141, 174, 377, 49, 1, 359000.00, NULL, NULL),
+(142, 175, 378, 50, 1, 359200.00, NULL, NULL),
+(143, 176, 390, 62, 1, 322000.00, NULL, NULL),
+(144, 177, 380, 52, 1, 289000.00, NULL, NULL),
+(145, 179, 384, 56, 1, 220000.00, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -249,8 +261,30 @@ CREATE TABLE `payments` (
   `payment_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `amount` decimal(10,2) NOT NULL,
   `payment_method` varchar(50) DEFAULT NULL,
-  `status` varchar(50) DEFAULT 'Pending'
+  `status` varchar(50) DEFAULT 'Pending',
+  `transaction_no` varchar(50) DEFAULT NULL COMMENT 'Mã giao dịch VNPAY (vnp_TransactionNo)',
+  `bank_code` varchar(20) DEFAULT NULL COMMENT 'Mã ngân hàng (vnp_BankCode)',
+  `payment_info` text DEFAULT NULL COMMENT 'Thông tin thanh toán (vnp_OrderInfo)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `payments`
+--
+
+INSERT INTO `payments` (`payment_id`, `order_id`, `payment_date`, `amount`, `payment_method`, `status`, `transaction_no`, `bank_code`, `payment_info`) VALUES
+(52, 166, '2024-12-14 20:13:33', 250000.00, 'COD', 'Unpaid', NULL, NULL, NULL),
+(53, 167, '2024-12-14 20:18:17', 319000.00, 'VNPAY', 'Paid', '14745198', 'NCB', 'Thanh toan don hang:167'),
+(54, 168, '2024-12-15 04:36:55', 155000.00, 'COD', 'Unpaid', NULL, NULL, NULL),
+(55, 169, '2024-12-15 05:00:51', 153321.00, 'COD', 'Unpaid', NULL, NULL, NULL),
+(56, 170, '2024-12-15 05:01:06', 155000.00, 'COD', 'Unpaid', NULL, NULL, NULL),
+(57, 171, '2024-12-15 05:01:28', 319000.00, 'COD', 'Unpaid', NULL, NULL, NULL),
+(58, 172, '2024-12-15 05:01:48', 250000.00, 'COD', 'Unpaid', NULL, NULL, NULL),
+(59, 173, '2024-12-15 05:02:12', 250000.00, 'COD', 'Unpaid', NULL, NULL, NULL),
+(60, 174, '2024-12-15 05:02:29', 389000.00, 'COD', 'Unpaid', NULL, NULL, NULL),
+(61, 175, '2024-12-15 05:02:46', 389200.00, 'COD', 'Unpaid', NULL, NULL, NULL),
+(62, 176, '2024-12-15 05:03:01', 352000.00, 'COD', 'Unpaid', NULL, NULL, NULL),
+(63, 177, '2024-12-15 05:03:46', 319000.00, 'COD', 'Unpaid', NULL, NULL, NULL),
+(65, 179, '2024-12-15 05:04:23', 250000.00, 'COD', 'Unpaid', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -288,8 +322,9 @@ INSERT INTO `products` (`product_id`, `product_name`, `category_id`, `descriptio
 (69, 'Thun Nam Green Ex Graphic Typo Outdoor MTS', 1, 'Thông Tin Về Sản Phẩm\r\n\r\nPHOM DÁNG: Slim / Regular\r\n\r\n- Áo phom Slim có độ ôm vừa vặn, tôn dáng cơ thể mang đến cho người mặc sự trẻ trung và năng động\r\n\r\n- Thiết kế bo cổ và tay áo độc đáo, kết hợp với đường chỉ may chắc chắn và sắc nét góp phần tôn lên sự trẻ trung và thanh lịch của người mặc\r\n\r\nCHẤT LIỆU:\r\n\r\n- Chất liệu Cotton Mercerized cho vải áo bóng mịn, thoáng mát, kháng khuẩn và khử mùi mang tới cảm giác dễ chịu do độ thấm hút mồ hôi nhanh chóng. Với công nghệ xử lý hiện đại, chất liệu vải này sở hữu độ bền vượt trội, hạn chế tối đa hiện tượng xơ, xổ vải, nấm mốc.\r\n\r\n- Vải có khả năng chống nhăn tốt, độ đàn hồi cao giúp cho người mặc luôn thoải mái và dễ dàng vận động.\r\n\r\n- Vải dệt từ 100% Cotton Mercerized mềm mại, bền màu và đồng thời không cầu kỳ trong việc chăm sóc vải.\r\n\r\nMÀU SẮC: Đen\r\n\r\nSIZE: S - M - L - XL - 2XL', 321000.00, 'assets/img/product/671548a422fe0.jpg', '2024-10-20 12:25:37', 0, 1, 0, NULL, 3, 0.00),
 (70, 'ÁO THUN COUPLE TX', 1, 'Thông Tin Về Sản Phẩm\r\n\r\nPHOM DÁNG: Slim / Regular\r\n\r\n- Áo phom Slim có độ ôm vừa vặn, tôn dáng cơ thể mang đến cho người mặc sự trẻ trung và năng động\r\n\r\n- Thiết kế bo cổ và tay áo độc đáo, kết hợp với đường chỉ may chắc chắn và sắc nét góp phần tôn lên sự trẻ trung và thanh lịch của người mặc\r\n\r\nCHẤT LIỆU:\r\n\r\n- Chất liệu Cotton Mercerized cho vải áo bóng mịn, thoáng mát, kháng khuẩn và khử mùi mang tới cảm giác dễ chịu do độ thấm hút mồ hôi nhanh chóng. Với công nghệ xử lý hiện đại, chất liệu vải này sở hữu độ bền vượt trội, hạn chế tối đa hiện tượng xơ, xổ vải, nấm mốc.\r\n\r\n- Vải có khả năng chống nhăn tốt, độ đàn hồi cao giúp cho người mặc luôn thoải mái và dễ dàng vận động.\r\n\r\n- Vải dệt từ 100% Cotton Mercerized mềm mại, bền màu và đồng thời không cầu kỳ trong việc chăm sóc vải.\r\n\r\nMÀU SẮC: Đen\r\n\r\nSIZE: S - M - L - XL - 2XL', 239000.00, 'assets/img/product/6715489af3708.jpg', '2024-10-20 14:20:47', 0, 1, 0, 220000.00, 3, 0.00),
 (71, 'sịp lỏ ', 1, 'ádasd', 325000.00, 'assets/img/product/67154876dbcfc.jpg', '2024-10-20 17:26:04', 0, 1, 0, NULL, 5, 0.00),
-(72, 'áo lót ', 1, 'ádasd', 123321.00, 'assets/img/product/6715485399e7a.jpg', '2024-10-20 17:26:44', 0, 0, 0, NULL, 4, 3.33),
-(74, 'quần bò nam ', 1, 'Thông Tin Về Sản Phẩm\r\n\r\nPHOM DÁNG: Slim / Regular\r\n\r\n- Áo phom Slim có độ ôm vừa vặn, tôn dáng cơ thể mang đến cho người mặc sự trẻ trung và năng động\r\n\r\n- Thiết kế bo cổ và tay áo độc đáo, kết hợp với đường chỉ may chắc chắn và sắc nét góp phần tôn lên sự trẻ trung và thanh lịch của người mặc\r\n\r\nCHẤT LIỆU:\r\n\r\n- Chất liệu Cotton Mercerized cho vải áo bóng mịn, thoáng mát, kháng khuẩn và khử mùi mang tới cảm giác dễ chịu do độ thấm hút mồ hôi nhanh chóng. Với công nghệ xử lý hiện đại, chất liệu vải này sở hữu độ bền vượt trội, hạn chế tối đa hiện tượng xơ, xổ vải, nấm mốc.\r\n\r\n- Vải có khả năng chống nhăn tốt, độ đàn hồi cao giúp cho người mặc luôn thoải mái và dễ dàng vận động.\r\n\r\n- Vải dệt từ 100% Cotton Mercerized mềm mại, bền màu và đồng thời không cầu kỳ trong việc chăm sóc vải.\r\n\r\nMÀU SẮC: Đen\r\n\r\nSIZE: S - M - L - XL - 2XL', 322000.00, 'assets/img/product/67154a4f2a493.jpg', '2024-10-20 18:22:07', 0, 1, 1, NULL, 3, 0.00);
+(72, 'áo lót ', 1, 'ádasd', 123321.00, 'assets/img/product/6715485399e7a.jpg', '2024-10-20 17:26:44', 0, 0, 0, NULL, 4, 3.75),
+(74, 'quần bò nam ', 1, 'Thông Tin Về Sản Phẩm\r\n\r\nPHOM DÁNG: Slim / Regular\r\n\r\n- Áo phom Slim có độ ôm vừa vặn, tôn dáng cơ thể mang đến cho người mặc sự trẻ trung và năng động\r\n\r\n- Thiết kế bo cổ và tay áo độc đáo, kết hợp với đường chỉ may chắc chắn và sắc nét góp phần tôn lên sự trẻ trung và thanh lịch của người mặc\r\n\r\nCHẤT LIỆU:\r\n\r\n- Chất liệu Cotton Mercerized cho vải áo bóng mịn, thoáng mát, kháng khuẩn và khử mùi mang tới cảm giác dễ chịu do độ thấm hút mồ hôi nhanh chóng. Với công nghệ xử lý hiện đại, chất liệu vải này sở hữu độ bền vượt trội, hạn chế tối đa hiện tượng xơ, xổ vải, nấm mốc.\r\n\r\n- Vải có khả năng chống nhăn tốt, độ đàn hồi cao giúp cho người mặc luôn thoải mái và dễ dàng vận động.\r\n\r\n- Vải dệt từ 100% Cotton Mercerized mềm mại, bền màu và đồng thời không cầu kỳ trong việc chăm sóc vải.\r\n\r\nMÀU SẮC: Đen\r\n\r\nSIZE: S - M - L - XL - 2XL', 322000.00, 'assets/img/product/67154a4f2a493.jpg', '2024-10-20 18:22:07', 0, 1, 1, NULL, 3, 3.00),
+(75, 'Polo meo emo ', 1, 'Được may từ những chất liệu đã qua lựa chọn kỹ lưỡng, các thiết kế áo thun và áo Polo dành cho nam của Louis Vuitton mang đến cảm giác sang trọng khi chạm vào.', 359000.00, 'assets/img/product/675e8c1652679.jpg', '2024-12-15 07:58:14', 1, 0, 0, NULL, 4, 0.00);
 
 -- --------------------------------------------------------
 
@@ -312,7 +347,10 @@ CREATE TABLE `product_reviews` (
 
 INSERT INTO `product_reviews` (`review_id`, `product_id`, `customer_id`, `rating`, `comment`, `created_at`) VALUES
 (5, 72, 6, 3, 'Mua cái áo này vì nghĩ sẽ sexy hơn, ai ngờ mặc vào trông như chiếc bao tải... chắc chỉ có cái túi rác mới quyến rũ hơn tôi lúc này!', '2024-10-23 07:01:38'),
-(7, 72, 6, 5, 'Mặc cái quần này xong, nhìn từ xa cứ tưởng đang mặc nhầm khăn trải bàn của nhà hàng nào đó... hẹn hò chắc cũng bữa cơm cuối!', '2024-10-23 07:19:48');
+(7, 72, 6, 5, 'Mặc cái quần này xong, nhìn từ xa cứ tưởng đang mặc nhầm khăn trải bàn của nhà hàng nào đó... hẹn hò chắc cũng bữa cơm cuối!', '2024-10-23 07:19:48'),
+(8, 72, 2, 2, '', '2024-12-15 07:51:20'),
+(9, 72, 2, 5, '', '2024-12-15 07:51:39'),
+(10, 74, 2, 3, '', '2024-12-15 08:02:57');
 
 -- --------------------------------------------------------
 
@@ -346,7 +384,8 @@ INSERT INTO `product_variants` (`variant_id`, `product_id`, `size_id`, `color_id
 (389, 74, 1, 7),
 (390, 74, 1, 1),
 (391, 74, 4, 4),
-(392, 74, 5, 7);
+(392, 74, 5, 7),
+(393, 75, 1, 6);
 
 -- --------------------------------------------------------
 
@@ -404,21 +443,22 @@ CREATE TABLE `sku` (
 --
 
 INSERT INTO `sku` (`sku_id`, `product_id`, `variant_id`, `sku_code`, `stock`, `price`, `created_at`, `updated_at`) VALUES
-(49, 63, 377, 'POLPRSEN9489', 1, 359000.00, '2024-10-20 11:20:23', '2024-10-20 11:20:23'),
-(50, 64, 378, 'POLPRMVN6150', 12, 359200.00, '2024-10-20 11:36:12', '2024-10-20 11:36:12'),
-(51, 65, 379, 'POLPRLHN0582', 4, 453000.00, '2024-10-20 11:41:24', '2024-10-20 11:41:24'),
-(52, 66, 380, 'POLPRSTR7661', 20, 289000.00, '2024-10-20 11:50:09', '2024-10-20 11:50:09'),
-(53, 67, 381, 'OPHPRSEN0413', 16, 125000.00, '2024-10-20 11:53:13', '2024-10-22 15:14:31'),
-(54, 68, 382, 'POLPRM2148', 20, 236000.00, '2024-10-20 11:55:44', '2024-10-20 11:55:44'),
+(49, 63, 377, 'POLPRSEN9489', 0, 359000.00, '2024-10-20 11:20:23', '2024-12-15 05:02:29'),
+(50, 64, 378, 'POLPRMVN6150', 11, 359200.00, '2024-10-20 11:36:12', '2024-12-15 05:02:46'),
+(51, 65, 379, 'POLPRLHN0582', 0, 453000.00, '2024-10-20 11:41:24', '2024-12-14 19:10:34'),
+(52, 66, 380, 'POLPRSTR7661', 17, 289000.00, '2024-10-20 11:50:09', '2024-12-15 05:03:46'),
+(53, 67, 381, 'OPHPRSEN0413', 6, 125000.00, '2024-10-20 11:53:13', '2024-12-15 05:01:06'),
+(54, 68, 382, 'POLPRM2148', 185, 236000.00, '2024-10-20 11:55:44', '2024-12-14 18:15:54'),
 (55, 69, 383, 'THUPRSVN0749', 23, 321000.00, '2024-10-20 12:25:37', '2024-10-20 12:25:37'),
-(56, 70, 384, 'OTHPRSEN2799', 20, 239000.00, '2024-10-20 14:20:47', '2024-10-20 14:20:47'),
-(57, 71, 385, 'SPLPRXVN6985', 1, 325000.00, '2024-10-20 17:26:04', '2024-10-23 05:49:57'),
-(58, 72, 386, 'OLTPRSVN1976', 12, 123321.00, '2024-10-20 17:26:44', '2024-10-20 17:26:44'),
-(59, 68, 387, 'POLPRSEN9941', 0, 0.00, '2024-10-20 18:15:13', '2024-10-20 18:15:13'),
-(61, 74, 389, 'QUNPRSVN0927', 20, 322000.00, '2024-10-20 18:22:07', '2024-10-23 05:26:54'),
-(62, 74, 390, 'QUNPRSEN8889', 19, 320000.00, '2024-10-21 12:20:01', '2024-10-23 07:22:25'),
-(63, 74, 391, 'QUNPRX4824', 19, 320000.00, '2024-10-22 05:11:54', '2024-10-22 16:27:59'),
-(64, 74, 392, 'QUNPRXVN5256', 20, 320000.00, '2024-10-23 05:26:54', '2024-10-23 05:26:54');
+(56, 70, 384, 'OTHPRSEN2799', 15, 239000.00, '2024-10-20 14:20:47', '2024-12-15 05:04:23'),
+(57, 71, 385, 'SPLPRXVN6985', 0, 325000.00, '2024-10-20 17:26:04', '2024-12-14 14:26:31'),
+(58, 72, 386, 'OLTPRSVN1976', 6, 123321.00, '2024-10-20 17:26:44', '2024-12-15 05:00:51'),
+(59, 68, 387, 'POLPRSEN9941', 321, 0.00, '2024-10-20 18:15:13', '2024-12-14 20:02:14'),
+(61, 74, 389, 'QUNPRSVN0927', 19, 322000.00, '2024-10-20 18:22:07', '2024-12-14 18:18:54'),
+(62, 74, 390, 'QUNPRSEN8889', 18, 320000.00, '2024-10-21 12:20:01', '2024-12-15 05:03:01'),
+(63, 74, 391, 'QUNPRX4824', 16, 320000.00, '2024-10-22 05:11:54', '2024-12-14 19:58:38'),
+(64, 74, 392, 'QUNPRXVN5256', 19, 320000.00, '2024-10-23 05:26:54', '2024-12-11 17:19:51'),
+(65, 75, 393, 'POLLOSXM2785', 20, 359000.00, '2024-12-15 07:58:14', '2024-12-15 07:58:14');
 
 -- --------------------------------------------------------
 
@@ -601,43 +641,43 @@ ALTER TABLE `colors`
 -- AUTO_INCREMENT cho bảng `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT cho bảng `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=180;
 
 --
 -- AUTO_INCREMENT cho bảng `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=146;
 
 --
 -- AUTO_INCREMENT cho bảng `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
 
 --
 -- AUTO_INCREMENT cho bảng `products`
 --
 ALTER TABLE `products`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
 
 --
 -- AUTO_INCREMENT cho bảng `product_reviews`
 --
 ALTER TABLE `product_reviews`
-  MODIFY `review_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `review_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT cho bảng `product_variants`
 --
 ALTER TABLE `product_variants`
-  MODIFY `variant_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=393;
+  MODIFY `variant_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=394;
 
 --
 -- AUTO_INCREMENT cho bảng `shopping_cart`
@@ -655,7 +695,7 @@ ALTER TABLE `sizes`
 -- AUTO_INCREMENT cho bảng `sku`
 --
 ALTER TABLE `sku`
-  MODIFY `sku_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
+  MODIFY `sku_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
 
 --
 -- AUTO_INCREMENT cho bảng `wishlists`

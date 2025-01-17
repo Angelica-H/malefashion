@@ -46,6 +46,11 @@ $current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
                         <i class="metismenu-icon"></i>Reviews
                     </a>
                 </li>
+                <li>
+                    <a href="./report.php" class="<?php echo ($current_page == 'report.php') ? 'mm-active' : ''; ?>">
+                        <i class="metismenu-icon"></i>Report
+                    </a>
+                </li>
             </ul>
         </li>
     </ul>

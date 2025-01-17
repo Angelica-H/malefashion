@@ -241,7 +241,7 @@ if ($result_all_products === false) {
     <!-- Product Section End -->
 
     <!-- Categories Section Begin -->
-    <section class="categories spad">
+    <!-- <section class="categories spad">
         <div class="container">
             <div class="row">
                 <div class="col-lg-3">
@@ -250,15 +250,14 @@ if ($result_all_products === false) {
                     </div>
                 </div>
                 <div class="col-lg-4">
-    </div>
-    </div>
-    </div>
-
-    </section>
+                </div>
+            </div>
+        </div> 
+        </section> -->
     <!-- Product Section End -->
 
     <!-- Categories Section Begin -->
-    <section class="categories spad">
+    <!-- <section class="categories spad">
         <div class="container">
             <div class="row">
                 <div class="col-lg-3">
@@ -302,11 +301,11 @@ if ($result_all_products === false) {
                 </div>
             </div>
         </div>
-    </section>
+    </section> -->
     <!-- Categories Section End -->
 
     <!-- Instagram Section Begin -->
-    <section class="instagram spad">
+    <!-- <section class="instagram spad">
         <div class="container">
             <div class="row">
                 <div class="col-lg-8">
@@ -329,11 +328,11 @@ if ($result_all_products === false) {
                 </div>
             </div>
         </div>
-    </section>
+    </section> -->
     <!-- Instagram Section End -->
 
     <!-- Latest Blog Section Begin -->
-    <section class="latest spad">
+    <!--<section class="latest spad">
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
@@ -376,7 +375,7 @@ if ($result_all_products === false) {
                 </div>
             </div>
         </div>
-    </section>
+    </section>-->
     <!-- Latest Blog Section End -->
 
     <!-- Footer Section Begin -->
